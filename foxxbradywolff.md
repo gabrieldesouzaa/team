@@ -1,6 +1,6 @@
 # Brady Wolff
 
-## Major ## Business Information Systems
+## Major  Business Information Systems
 
  Getting more familiar with Artificial Intelligence and their application
 
