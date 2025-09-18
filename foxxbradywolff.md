@@ -1,10 +1,10 @@
 # Brady Wolff
 
-# Business Information Systems
+##Major## Business Information Systems
 
-# Getting more familiar with Artificial Intelligence and their application
+ Getting more familiar with Artificial Intelligence and their application
 
-# I am graduating a year and a half early 
+ I am graduating a year and a half early 
 
 
 git add foxxbradywolff.md
