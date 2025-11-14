@@ -1,14 +1,28 @@
 # Onboard AI – Quick Start Guide
+QUICK_START.md
+🚀 Onboard AI – Quick Start Guide
 
+Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare environments.
+This Quick Start Guide is formatted specifically for GitHub using clear headers and bold-wrapped bullet lines.
+
+📌 What Is Onboard AI?
+
+Onboard AI helps new hires, patients/clients, and administrators complete onboarding tasks quickly and accurately using AI automation.
+
+This guide covers:
+
+** New Hire Onboarding **
+** Client / Patient Intake **
+** AI-Generated Service Quotes **
 
 ## Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare settings. This guide will help you get started and complete your first tasks in just a few minutes.
 
  What Is Onboard AI?
 Onboard AI is an easy-to-use platform that helps new hires, patients/clients, and administrators complete onboarding tasks quickly. It uses AI to automate paperwork, answer questions, verify information, and guide you step-by-step.
 This guide will walk you through three core features:
-- ** Completing new‑hire onboarding
-- ** Submitting client/patient intake forms
-- ** Generating an AI-powered service quote
+- Completing new‑hire onboarding
+- Submitting client/patient intake forms
+- Generating an AI-powered service quote
 
 You do NOT need technical experience. Just follow the steps below.
 
