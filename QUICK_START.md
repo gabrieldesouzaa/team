@@ -1,4 +1,3 @@
-QUICK_START.md
 🚀 Onboard AI – Quick Start Guide
 Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare settings. This guide will help you get started and complete your first tasks in just a few minutes.
 
