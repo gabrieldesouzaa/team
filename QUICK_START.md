@@ -6,21 +6,16 @@
  What Is Onboard AI?
 Onboard AI is an easy-to-use platform that helps new hires, patients/clients, and administrators complete onboarding tasks quickly. It uses AI to automate paperwork, answer questions, verify information, and guide you step-by-step.
 This guide will walk you through three core features:
-Completing new‑hire onboarding
-
-
-Submitting client/patient intake forms
-
-
-Generating an AI-powered service quote
-
+- ## Completing new‑hire onboarding
+- ## Submitting client/patient intake forms
+- ## Generating an AI-powered service quote
 
 You do NOT need technical experience. Just follow the steps below.
 
-1️⃣ New Hire Onboarding
-Goal: Complete your onboarding documents and training.
-Step-by-Step
-Check your email for your onboarding invitation from your HR team.
+# New Hire Onboarding
+- ## Goal: Complete your onboarding documents and training.
+- ## Step-by-Step
+- ## Check your email for your onboarding invitation from your HR team.
 
 
 Click “Start Onboarding”. This opens the Onboard AI assistant.
