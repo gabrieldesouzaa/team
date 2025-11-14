@@ -1,7 +1,9 @@
-🚀 Onboard AI – Quick Start Guide
-Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare settings. This guide will help you get started and complete your first tasks in just a few minutes.
+# Onboard AI – Quick Start Guide
 
-📌 What Is Onboard AI?
+
+## Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare settings. This guide will help you get started and complete your first tasks in just a few minutes.
+
+ What Is Onboard AI?
 Onboard AI is an easy-to-use platform that helps new hires, patients/clients, and administrators complete onboarding tasks quickly. It uses AI to automate paperwork, answer questions, verify information, and guide you step-by-step.
 This guide will walk you through three core features:
 Completing new‑hire onboarding
