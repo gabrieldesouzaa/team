@@ -1,140 +1,85 @@
+# QUICK_START.md
+
 # Onboard AI – Quick Start Guide
-QUICK_START.md
-🚀 Onboard AI – Quick Start Guide
 
-Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare environments.
-This Quick Start Guide is formatted specifically for GitHub using clear headers and bold-wrapped bullet lines.
+## Overview
+Onboard AI is a simple, user-friendly platform that guides new hires, clients, and patients through onboarding steps using automated forms, document uploads, and AI assistance. This Quick Start Guide explains how to complete the core actions required to begin using the system.
 
-📌 What Is Onboard AI?
+---
 
-Onboard AI helps new hires, patients/clients, and administrators complete onboarding tasks quickly and accurately using AI automation.
+## New Hire Onboarding
 
-This guide covers:
+### Goal
+Complete required onboarding forms, uploads, and training.
 
-** New Hire Onboarding **
-** Client / Patient Intake **
-** AI-Generated Service Quotes **
+### Steps
+- **Open your onboarding invitation email.** Click the link provided by your HR team.
+- **Select “Start Onboarding.”** This opens the Onboard AI assistant.
+- **Provide your basic information.** Enter details such as your name, address, and role.
+- **Upload your documents.** Submit your ID, certifications, or license files as requested.
+- **Review and sign forms.** Any fields requiring attention will be highlighted.
+- **Complete training modules.** All mandatory sessions must be completed to proceed.
+- **Confirm completion.** A final confirmation message appears when all tasks are finished.
 
-## Welcome to Onboard AI, your digital assistant for fast, simple, and compliant onboarding in healthcare settings. This guide will help you get started and complete your first tasks in just a few minutes.
+### Requirements
+- A computer or mobile device  
+- Required documentation (ID, certifications, etc.)  
+- Approximately 10–20 minutes  
 
- What Is Onboard AI?
-Onboard AI is an easy-to-use platform that helps new hires, patients/clients, and administrators complete onboarding tasks quickly. It uses AI to automate paperwork, answer questions, verify information, and guide you step-by-step.
-This guide will walk you through three core features:
-- Completing new‑hire onboarding
-- Submitting client/patient intake forms
-- Generating an AI-powered service quote
+---
 
-You do NOT need technical experience. Just follow the steps below.
+## Client / Patient Intake
 
-# New Hire Onboarding
-- ## Goal: Complete your onboarding documents and training.
-- ## Step-by-Step
-- ## Check your email for your onboarding invitation from your HR team.
+### Goal
+Submit all necessary intake forms and documents prior to your visit or service.
 
+### Steps
+- **Open your intake link.** This is provided by email or through the clinic portal.
+- **Select “Begin Intake.”** This starts the guided intake process.
+- **Upload required documents.** Items such as ID, insurance cards, and prior medical documents may be requested.
+- **Allow auto-fill.** The system extracts information from your uploads and places them into the appropriate forms.
+- **Review your information.** Correct any fields that are flagged for attention.
+- **Submit your packet.** After submission, you will receive confirmation.
 
-Click “Start Onboarding”. This opens the Onboard AI assistant.
+### Requirements
+- Insurance card or ID  
+- PDFs or photos of required documents  
+- Approximately 5–10 minutes  
 
+---
 
-The AI chatbot will greet you and ask a few basic questions (name, address, role, etc.).
+## Healthcare Service Quote
 
+### Goal
+Receive an instant cost estimate for a selected healthcare service.
 
-Upload required documents (e.g., ID, certifications). The system will auto-fill your forms.
+### Steps
+- **Log in to the Onboard AI portal.** Use your secure access link.
+- **Select “Request a Quote.”** This opens the cost estimator.
+- **Choose your service.** Options include imaging, lab work, consultations, and more.
+- **Enter required details.** Provide insurance information, location, and other applicable data.
+- **Generate your quote.** The system displays estimated cost, insurance coverage, and expected out-of-pocket totals.
 
+### Quote Output Includes
+- Estimated service cost  
+- Insurance coverage breakdown  
+- Out-of-pocket projections  
 
-Review and digitally sign any documents flagged for your approval.
+---
 
+## Support
 
-The assistant will provide your mandatory training modules. Click each to begin.
+### Getting Help
+- **Use the built-in chat.** You can ask questions at any point during onboarding or intake.
+- **Examples of helpful prompts:**  
+  - “Where do I upload my ID?”  
+  - “What forms are still incomplete?”  
+  - “How do I understand my cost estimate?”
 
+If the AI cannot assist, your inquiry is routed to a human support team member.
 
-When finished, you’ll see a green checkmark showing onboarding is complete.
+---
 
+## Completion
 
-What You Need:
-A smartphone or computer
-
-
-Your onboarding documents (ID, license, certificates)
-
-
-10–20 minutes
-
-
-
-2️⃣ Client / Patient Intake
-Goal: Submit your intake forms quickly without retyping information.
-Step-by-Step
-From your email or clinic portal, click “Begin Intake”.
-
-
-Upload any requested documents (insurance card, ID, medical notes).
-
-
-Onboard AI will automatically extract key info and fill in your forms.
-
-
-Review your details — the system highlights anything that needs attention.
-
-
-Submit your completed forms. You will receive a confirmation message.
-
-
-What You Need:
-Insurance card or ID
-
-
-Photos or PDFs of any required documents
-
-
-5–10 minutes
-
-
-
-3️⃣ Generate a Healthcare Service Quote
-Goal: Instantly receive an estimated cost for a procedure or service.
-Step-by-Step
-Log in to the Onboard AI portal.
-
-
-Select “Request a Quote”.
-
-
-Choose your service from the list (e.g., MRI, lab tests, consultation).
-
-
-Enter any required details (provider, location, insurance information).
-
-
-Click “Generate Quote”.
-
-
-Onboard AI will produce:
-
-
-An estimated cost
-
-
-Insurance coverage details
-
-
-Expected out‑of‑pocket amount
-
-
-You may download or share the quote with your provider.
-
-❓ Need Help?
-You can always type a question into the chat window — for example:
-“Where do I upload my ID?”
-
-
-“What forms do I still need to sign?”
-
-
-“Help me understand my quote.”
-
-
-The AI will guide you instantly, or route your question to a support person if needed.
-
-🎉 You’re Ready to Begin!
-Onboard AI makes onboarding simpler, faster, and stress-free. Start your first task with confidence — we’re here to help every step of the way.
-
+You are now ready to begin using Onboard AI. Follow the steps for your role or onboarding type and complete the listed tasks in order. The system will confirm once all requirements are met.
