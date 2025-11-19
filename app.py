@@ -1,8 +1,9 @@
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -60,16 +61,11 @@ COMPANY HANDBOOK:
 """.strip()
 
 # --- Gemini API Configuration ---
-@st.cache_resource
-def load_client() -> genai.Client:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-
-    # No genai.configure in the new SDK – pass the key directly to the client
-    return genai.Client(api_key=api_key)
-
-client = load_client()
+api_key = os.environ.get("GEMINI_API_KEY")
+if not api_key:
+    raise RuntimeError("GEMINI_API_KEY environment variable is not set")
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel(MODEL_ID)
 
 # --- Streamlit UI ---
 st.set_page_config(layout="centered", page_title=f"{COMPANY_NAME} Onboarding")
@@ -105,7 +101,10 @@ if prompt := st.chat_input("Ask about company policies..."):
         st.markdown(prompt)
 
     # Prepare conversation history for the API
+    # Prepend system prompt as first message
     api_history = [
+        {"role": "user", "parts": [get_system_prompt()]}
+    ] + [
         {"role": "user" if msg["role"] == "user" else "model", "parts": [msg["content"]]}
         for msg in st.session_state.messages
     ]
@@ -114,14 +113,12 @@ if prompt := st.chat_input("Ask about company policies..."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         try:
-            response = client.generate_content(
-                model=f"models/{MODEL_ID}",
-                contents=api_history,
+            response = model.generate_content(
+                api_history,
                 generation_config={
                     "temperature": 0.4,
                     "max_output_tokens": 512,
                 },
-                system_instruction=get_system_prompt(),
                 safety_settings={
                     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
