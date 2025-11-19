@@ -1,8 +1,10 @@
 import streamlit as st
 import os
+from dotenv import load_dotenv
 from google import genai
-from google.genai import types # Add this import
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from google.genai import types
+
+load_dotenv()
 
 # --- CSS from style.css (embedded) ---
 st.markdown("""
@@ -112,14 +114,20 @@ if prompt := st.chat_input("Ask about company policies..."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         try:
-            response = client.models.generate_content(
-                model=f"models/{MODEL_ID}", 
-                contents=prompt,  # Pass the user's input string directly
-                config=types.GenerateContentConfig(
-                    system_instruction=get_system_prompt(),
-                    temperature=0.4,
-                    max_output_tokens=512,
-                )
+            response = client.generate_content(
+                model=f"models/{MODEL_ID}",
+                contents=api_history,
+                generation_config={
+                    "temperature": 0.4,
+                    "max_output_tokens": 512,
+                },
+                system_instruction=get_system_prompt(),
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                },
             )
             full_response = response.text
             message_placeholder.markdown(full_response)
