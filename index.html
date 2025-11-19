@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 400px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #chat-response {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 10px;
+            min-height: 50px;
+            border-radius: 4px;
+        }
+        input {
+            width: 70%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>AI Chatbot</h1>
+        <div id="chat-response"></div>
+        <input type="text" id="user-input" placeholder="Ask the chatbot...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const userMessage = input.value;
+            const chatResponse = document.getElementById('chat-response');
+
+            chatResponse.textContent = 'Loading...';
+
+            const apiUrl = 'http://localhost:5000/api/chat';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userMessage }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    chatResponse.textContent = `Error: ${errorData.error}`;
+                    return;
+                }
+
+                const data = await response.json();
+                chatResponse.textContent = data.reply;
+            } catch (error) {
+                chatResponse.textContent = 'Error: Could not connect to the server.';
+            } finally {
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
