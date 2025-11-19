@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { GoogleGenerativeAI, ChatSession } from 'google/generative-ai';
+import { GoogleGenerativeAI, ChatSession } from '@google/generative-ai';
 
 dotenv.config();
 
