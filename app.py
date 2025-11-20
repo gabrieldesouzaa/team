@@ -61,10 +61,17 @@ COMPANY HANDBOOK:
 """.strip()
 
 # --- Gemini API Configuration ---
-api_key = os.environ.get("GEMINI_API_KEY")
+# Read and sanitize GEMINI_API_KEY (strip surrounding quotes/newlines)
+api_key = os.environ.get("GEMINI_API_KEY", "")
+api_key = api_key.strip().strip('"').strip("'")
 if not api_key:
-    raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-genai.configure(api_key=api_key)
+    raise RuntimeError("GEMINI_API_KEY environment variable is not set or is empty. Please set it in your .env or environment.")
+if len(api_key) < 20:
+    raise RuntimeError("GEMINI_API_KEY appears to be malformed or too short. Check your .env formatting.")
+try:
+    genai.configure(api_key=api_key)
+except Exception as e:
+    raise RuntimeError(f"Failed to configure Gemini client: {e}")
 model = genai.GenerativeModel(MODEL_ID)
 
 # --- Streamlit UI ---
