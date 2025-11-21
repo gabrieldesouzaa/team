@@ -38,7 +38,159 @@ Here is the company policy:
 """
 
 # Streamlit UI
-st.title("Innovate Inc. HR Chatbot")
+
+st.title("Onboarding HR Assistant")
+
+# Custom CSS for full-page background and transparent main content
+st.markdown("""
+<style>
+    .stApp {
+        background-color: transparent;
+    }
+    #firefly-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+
+    [data-testid="stChatMessage"] {
+        padding: 10px 15px;
+        border-radius: 20px;
+        margin-bottom: 10px;
+        max-width: 75%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* Assistant messages (bot) */
+    [data-testid="stChatMessage"]:nth-child(even) {
+        background-color: rgba(47, 79, 47, 0.8) !important; /* Swampy green */
+        color: white !important;
+        margin-right: auto;
+        flex-direction: row;
+    }
+
+    /* User messages */
+    [data-testid="stChatMessage"]:nth-child(odd) {
+        background-color: rgba(100, 149, 237, 0.8) !important; /* Cornflower blue */
+        color: white !important;
+        margin-left: auto;
+        flex-direction: row-reverse;
+    }
+
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        color: inherit !important;
+    }
+
+    [data-testid="stChatMessage"] p {
+        color: inherit !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(to right, #000000, #434343);
+        color: white;
+    }
+    [data-testid="stSidebar"] h3 {
+        color: #FFD700;
+    }
+    [data-testid="stSidebar"] .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border-radius: 12px;
+        width: 100%;
+    }
+    [data-testid="stSidebar"] .stButton>button:hover {
+        background-color: white;
+        color: black;
+        border: 2px solid #4CAF50;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Add the firefly animation
+st.markdown("""
+<canvas id="firefly-canvas"></canvas>
+<script>
+    const canvas = document.getElementById('firefly-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const fireflies = [];
+    const numFireflies = 50;
+
+    class Firefly {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.radius = Math.random() * 2 + 1;
+            this.speedX = (Math.random() - 0.5) * 0.5;
+            this.speedY = (Math.random() - 0.5) * 0.5;
+            this.opacity = Math.random() * 0.5 + 0.5;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            if (this.x < 0 || this.x > canvas.width) {
+                this.speedX *= -1;
+            }
+
+            if (this.y < 0 || this.y > canvas.height) {
+                this.speedY *= -1;
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 0, ${this.opacity})`;
+            ctx.fill();
+        }
+    }
+
+    function init() {
+        for (let i = 0; i < numFireflies; i++) {
+            fireflies.push(new Firefly());
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (const firefly of fireflies) {
+            firefly.update();
+            firefly.draw();
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
+""", unsafe_allow_html=True)
 
 if "chat_session" not in st.session_state:
     model = genai.GenerativeModel(
@@ -51,17 +203,18 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    avatar = "🧑" if message["role"] == "user" else "🤖"
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
 user_input = st.chat_input("Enter your question here...")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🧑"):
         st.markdown(user_input)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("Thinking..."):
             try:
                 response = st.session_state.chat_session.send_message(user_input)
@@ -86,17 +239,49 @@ def validate_input(user_input):
         return False, "Question too long. Please keep under 1000 characters."
     return True, ""
 
-# main logic:
-if user_input:
-    is_valid, validation_msg = validate_input(user_input)
-    if not is_valid:
-        st.warning(validation_msg)
-    else:
-
+# Add example questions
+example_questions = [
+    "How many PTO days can I get?",
+    "What are the standard work hours?",
+    "How do I request flexible hours?"
+]
 
 # what chatbot can answer limit
 with st.sidebar:
-    st.header("About")
+    st.markdown("""
+        <style>
+            [data-testid="stSidebar"] {
+                background: linear-gradient(to right, #000000, #434343);
+                color: white;
+            }
+            [data-testid="stSidebar"] h3 {
+                color: #FFD700;
+            }
+            [data-testid="stSidebar"] .stButton>button {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 24px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                transition-duration: 0.4s;
+                cursor: pointer;
+                border-radius: 12px;
+                width: 100%;
+            }
+            [data-testid="stSidebar"] .stButton>button:hover {
+                background-color: white;
+                color: black;
+                border: 2px solid #4CAF50;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.subheader("Example Questions")
+    
     st.markdown("""
     This HR chatbot can answer questions about:
     - Work hours & flexible arrangements
@@ -106,24 +291,22 @@ with st.sidebar:
     
     **Note:** Only answers based on the provided policy document.
     """)
+    for question in example_questions:
+        if st.button(question, key=question):
+            st.session_state.auto_question = question
+            st.rerun()
 
-# Add a clear conversation button
-col1, col2 = st.columns([3, 1])
-with col2:
-    if st.button("Clear Chat"):
-        st.session_state.messages = []
-        st.session_state.chat_session = model.start_chat(history=[])
-        st.rerun()
+if "auto_question" in st.session_state and st.session_state.auto_question:
+    user_input = st.session_state.auto_question
+    st.session_state.auto_question = ""  # Reset after use
+else:
+    user_input = st.chat_input("Ask about company policy...")
 
-# Add example questions
-st.sidebar.subheader("Example Questions")
-example_questions = [
-    "How many PTO days do I get?",
-    "What are the standard work hours?",
-    "How do I request flexible hours?"
-]
 
-for q in example_questions:
-    if st.sidebar.button(q, key=q):
-        # This would trigger the chat input
-        st.session_state.auto_question = q
+# Clear chat button
+if st.sidebar.button("Clear Chat", type="secondary"):
+    st.session_state.messages = []
+    st.session_state.chat_session = model.start_chat(history=[])
+    st.session_state.auto_question = ""
+    st.rerun()
+
