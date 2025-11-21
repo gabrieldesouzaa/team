@@ -54,7 +54,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-user_input = st.chat_input("Ask about company policy...")
+user_input = st.chat_input("Enter your question here...")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -71,3 +71,59 @@ if user_input:
             except Exception as e:
                 st.error(f"An error occurred: {e}")
                 st.session_state.messages.append({"role": "assistant", "content": f"Error: {e}"})
+
+# Add history management to prevent infinite growth
+MAX_HISTORY = 50  # keep last 50 messages
+
+if len(st.session_state.messages) > MAX_HISTORY:
+    st.session_state.messages = st.session_state.messages[-MAX_HISTORY:]
+
+def validate_input(user_input):
+    """Basic input validation"""
+    if not user_input or user_input.strip() == "":
+        return False, "Type your question here."
+    if len(user_input) > 1000:
+        return False, "Question too long. Please keep under 1000 characters."
+    return True, ""
+
+# main logic:
+if user_input:
+    is_valid, validation_msg = validate_input(user_input)
+    if not is_valid:
+        st.warning(validation_msg)
+    else:
+
+
+# what chatbot can answer limit
+with st.sidebar:
+    st.header("About")
+    st.markdown("""
+    This HR chatbot can answer questions about:
+    - Work hours & flexible arrangements
+    - Paid Time Off (PTO) policies
+    - Code of conduct
+    - Company policies
+    
+    **Note:** Only answers based on the provided policy document.
+    """)
+
+# Add a clear conversation button
+col1, col2 = st.columns([3, 1])
+with col2:
+    if st.button("Clear Chat"):
+        st.session_state.messages = []
+        st.session_state.chat_session = model.start_chat(history=[])
+        st.rerun()
+
+# Add example questions
+st.sidebar.subheader("Example Questions")
+example_questions = [
+    "How many PTO days do I get?",
+    "What are the standard work hours?",
+    "How do I request flexible hours?"
+]
+
+for q in example_questions:
+    if st.sidebar.button(q, key=q):
+        # This would trigger the chat input
+        st.session_state.auto_question = q
