@@ -1,6 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+import PIL.Image
+import io
 
 # Set up Google Generative AI
 try:
@@ -27,8 +29,9 @@ COMPANY_POLICY = """
 
 SYSTEM_INSTRUCTION = f"""You are an expert HR assistant for "Innovate Inc.". Your sole purpose is to answer employee questions about the company policy. 
 You must base your answers strictly and exclusively on the provided company policy document. 
+If a user uploads a file, you can also answer questions about it.
 Do not use any external knowledge or make assumptions. 
-If a question cannot be answered from the policy, state that the information is not available in the policy document and do not apologize. 
+If a question cannot be answered from the policy or the file, state that the information is not available in the provided documents and do not apologize. 
 Keep your answers concise, clear, and professional. Format your answers using markdown for better readability where appropriate (e.g., lists, bold text).
 
 Here is the company policy:
@@ -37,16 +40,30 @@ Here is the company policy:
 ---
 """
 
-# Streamlit UI
+# --- Streamlit UI ---
 
-st.title("Onboarding HR Assistant")
-
-# Custom CSS for full-page background and transparent main content
+# Custom CSS for UI overhaul
 st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+    /* --- Base Styles --- */
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+
+    @keyframes animated-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .stApp {
         background-color: transparent;
     }
+
     #firefly-canvas {
         position: fixed;
         top: 0;
@@ -55,136 +72,155 @@ st.markdown("""
         height: 100%;
         z-index: -1;
     }
-
-    [data-testid="stChatMessage"] {
-        padding: 10px 15px;
-        border-radius: 20px;
-        margin-bottom: 10px;
-        max-width: 75%;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
+    
+    /* --- Title --- */
+    .title-container {
+        text-align: center;
+        padding: 2rem 0;
+        color: #FFFFFF;
+    }
+    .title-container h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -1px;
+    }
+    .title-container p {
+        font-size: 1rem;
+        color: #A0AEC0; /* Lighter gray for subtitle */
     }
 
-    /* Assistant messages (bot) */
+    /* --- Chat Messages --- */
+    [data-testid="stChatMessage"] {
+        padding: 1rem 1.25rem;
+        border-radius: 1.25rem; /* Softer radius */
+        margin-bottom: 1rem;
+        max-width: 80%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Assistant messages */
     [data-testid="stChatMessage"]:nth-child(even) {
-        background-color: rgba(47, 79, 47, 0.8) !important; /* Swampy green */
-        color: white !important;
+        background-color: #1A202C !important; /* Dark teal */
+        color: #E2E8F0 !important;
         margin-right: auto;
         flex-direction: row;
     }
 
     /* User messages */
     [data-testid="stChatMessage"]:nth-child(odd) {
-        background-color: rgba(100, 149, 237, 0.8) !important; /* Cornflower blue */
-        color: white !important;
+        background-color: #2D3748 !important; /* Slightly lighter dark blue-gray */
+        color: #F7FAFC !important;
         margin-left: auto;
         flex-direction: row-reverse;
+        position: relative;
+        z-index: 1;
+    }
+    
+    [data-testid="stChatMessage"]:nth-child(odd)::before {
+        content: '';
+        position: absolute;
+        top: -2px; left: -2px; right: -2px; bottom: -2px;
+        background: linear-gradient(90deg, #38B2AC, #4299E1, #9F7AEA, #ED64A6, #38B2AC);
+        background-size: 300%;
+        border-radius: 1.35rem; /* Match parent */
+        z-index: -1;
+        animation: animated-gradient 8s linear infinite;
+        filter: blur(2px); /* Softer glow */
     }
 
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
         color: inherit !important;
+        font-size: 1rem;
+        line-height: 1.6;
     }
 
-    [data-testid="stChatMessage"] p {
-        color: inherit !important;
-    }
-
+    /* --- Sidebar --- */
     [data-testid="stSidebar"] {
-        background: linear-gradient(to right, #000000, #434343);
-        color: white;
+        background: #111827; /* Darker sidebar */
+        border-right: 1px solid #1A202C;
     }
     [data-testid="stSidebar"] h3 {
-        color: #FFD700;
+        color: #90CDF4; /* Soft blue for headings */
+        font-weight: 600;
     }
     [data-testid="stSidebar"] .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        transition-duration: 0.4s;
-        cursor: pointer;
-        border-radius: 12px;
+        background-color: #2D3748;
+        color: #E2E8F0;
+        border: 1px solid #4A5568;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 0.75rem;
         width: 100%;
+        transition: background-color 0.3s, border-color 0.3s;
     }
     [data-testid="stSidebar"] .stButton>button:hover {
-        background-color: white;
-        color: black;
-        border: 2px solid #4CAF50;
+        background-color: #4A5568;
+        border-color: #63B3ED;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Add the firefly animation
+
+# Custom Title
+st.markdown("""
+<div class="title-container">
+    <h1>Onboarding HR Assistant</h1>
+    <p>Your friendly guide to company policies at Innovate Inc.</p>
+</div>
+""", unsafe_allow_html=True)
+
+
+# Add the firefly animation (no changes here)
 st.markdown("""
 <canvas id="firefly-canvas"></canvas>
 <script>
     const canvas = document.getElementById('firefly-canvas');
     const ctx = canvas.getContext('2d');
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
     const fireflies = [];
-    const numFireflies = 50;
+    const numFireflies = 30; // Reduced for a calmer effect
 
     class Firefly {
         constructor() {
             this.x = Math.random() * canvas.width;
             this.y = Math.random() * canvas.height;
-            this.radius = Math.random() * 2 + 1;
-            this.speedX = (Math.random() - 0.5) * 0.5;
-            this.speedY = (Math.random() - 0.5) * 0.5;
-            this.opacity = Math.random() * 0.5 + 0.5;
+            this.radius = Math.random() * 1.5 + 0.5;
+            this.speedX = (Math.random() - 0.5) * 0.3;
+            this.speedY = (Math.random() - 0.5) * 0.3;
+            this.opacity = Math.random() * 0.4 + 0.3; // More subtle
         }
-
         update() {
             this.x += this.speedX;
             this.y += this.speedY;
-
-            if (this.x < 0 || this.x > canvas.width) {
-                this.speedX *= -1;
-            }
-
-            if (this.y < 0 || this.y > canvas.height) {
-                this.speedY *= -1;
-            }
+            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
         }
-
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 0, ${this.opacity})`;
+            ctx.fillStyle = `rgba(255, 215, 0, ${this.opacity})`; // Gold color
             ctx.fill();
         }
     }
 
-    function init() {
-        for (let i = 0; i < numFireflies; i++) {
-            fireflies.push(new Firefly());
-        }
-    }
-
+    function init() { for (let i = 0; i < numFireflies; i++) fireflies.push(new Firefly()); }
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         for (const firefly of fireflies) {
             firefly.update();
             firefly.draw();
         }
-
         requestAnimationFrame(animate);
     }
-
     init();
     animate();
-
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -205,19 +241,66 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     avatar = "🧑" if message["role"] == "user" else "🤖"
     with st.chat_message(message["role"], avatar=avatar):
-        st.markdown(message["content"])
+        if "content" in message:
+            st.markdown(message["content"])
+        if "files" in message:
+            for file_name, file_data in message["files"].items():
+                if "image" in file_data["type"]:
+                    st.image(file_data["data"], caption=file_name, width=200)
+                else:
+                    st.write(f"📄 {file_name}")
 
-user_input = st.chat_input("Enter your question here...")
+# Consolidate input area
+with st.container():
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        uploaded_files = st.file_uploader(
+            "📎", accept_multiple_files=True, label_visibility="collapsed"
+        )
+    with col2:
+        if "auto_question" in st.session_state and st.session_state.auto_question:
+            user_input = st.chat_input("Ask about company policy...", key="auto_question_input")
+            st.session_state.auto_question = "" # Reset
+        else:
+            user_input = st.chat_input("Enter your question here...")
+
 
 if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    message_content = {"role": "user", "content": user_input, "files": {}}
+    
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            bytes_data = uploaded_file.read()
+            message_content["files"][uploaded_file.name] = {
+                "type": uploaded_file.type,
+                "data": bytes_data
+            }
+
+    st.session_state.messages.append(message_content)
+
     with st.chat_message("user", avatar="🧑"):
         st.markdown(user_input)
+        if uploaded_files:
+            for file_name, file_data in message_content["files"].items():
+                if "image" in file_data["type"]:
+                    st.image(file_data["data"], caption=file_name, width=200)
+                else:
+                    st.write(f"📄 {file_name}")
+
 
     with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("Thinking..."):
             try:
-                response = st.session_state.chat_session.send_message(user_input)
+                contents = [user_input]
+                if uploaded_files:
+                    for uploaded_file in uploaded_files:
+                        if "image" in uploaded_file.type:
+                            img = PIL.Image.open(io.BytesIO(message_content["files"][uploaded_file.name]["data"]))
+                            contents.append(img)
+                        else: # For now, treat other files as text
+                            contents.append(message_content["files"][uploaded_file.name]["data"].decode())
+                
+                response = st.session_state.chat_session.send_message(contents)
                 assistant_response = response.text
                 st.markdown(assistant_response)
                 st.session_state.messages.append({"role": "assistant", "content": assistant_response})
@@ -226,7 +309,7 @@ if user_input:
                 st.session_state.messages.append({"role": "assistant", "content": f"Error: {e}"})
 
 # Add history management to prevent infinite growth
-MAX_HISTORY = 50  # keep last 50 messages
+MAX_HISTORY = 50
 
 if len(st.session_state.messages) > MAX_HISTORY:
     st.session_state.messages = st.session_state.messages[-MAX_HISTORY:]
@@ -239,47 +322,8 @@ def validate_input(user_input):
         return False, "Question too long. Please keep under 1000 characters."
     return True, ""
 
-# Add example questions
-example_questions = [
-    "How many PTO days can I get?",
-    "What are the standard work hours?",
-    "How do I request flexible hours?"
-]
-
-# what chatbot can answer limit
+# --- Sidebar Content ---
 with st.sidebar:
-    st.markdown("""
-        <style>
-            [data-testid="stSidebar"] {
-                background: linear-gradient(to right, #000000, #434343);
-                color: white;
-            }
-            [data-testid="stSidebar"] h3 {
-                color: #FFD700;
-            }
-            [data-testid="stSidebar"] .stButton>button {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 10px 24px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                transition-duration: 0.4s;
-                cursor: pointer;
-                border-radius: 12px;
-                width: 100%;
-            }
-            [data-testid="stSidebar"] .stButton>button:hover {
-                background-color: white;
-                color: black;
-                border: 2px solid #4CAF50;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-    
     st.subheader("Example Questions")
     
     st.markdown("""
@@ -291,22 +335,21 @@ with st.sidebar:
     
     **Note:** Only answers based on the provided policy document.
     """)
+    
+    example_questions = [
+        "How many PTO days can I get?",
+        "What are the standard work hours?",
+        "How do I request flexible hours?"
+    ]
+
     for question in example_questions:
         if st.button(question, key=question):
             st.session_state.auto_question = question
             st.rerun()
 
-if "auto_question" in st.session_state and st.session_state.auto_question:
-    user_input = st.session_state.auto_question
-    st.session_state.auto_question = ""  # Reset after use
-else:
-    user_input = st.chat_input("Ask about company policy...")
-
-
-# Clear chat button
-if st.sidebar.button("Clear Chat", type="secondary"):
-    st.session_state.messages = []
-    st.session_state.chat_session = model.start_chat(history=[])
-    st.session_state.auto_question = ""
-    st.rerun()
-
+    # Clear chat button
+    if st.button("Clear Chat", type="secondary"):
+        st.session_state.messages = []
+        st.session_state.chat_session = model.start_chat(history=[])
+        st.session_state.auto_question = ""
+        st.rerun()
