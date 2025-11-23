@@ -42,130 +42,18 @@ Here is the company policy:
 
 # --- Streamlit UI ---
 
-# Custom CSS for UI overhaul
+# Custom CSS for fine-tuning elements
 st.markdown("""
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-    /* --- Base Styles --- */
-    body {
-        font-family: 'Inter', sans-serif;
-    }
-
-    @keyframes animated-gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .stApp {
-        background-color: transparent;
-    }
-
-    #firefly-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-    }
-    
-    /* --- Title --- */
-    .title-container {
-        text-align: center;
-        padding: 2rem 0;
-        color: #FFFFFF;
-    }
-    .title-container h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        letter-spacing: -1px;
-    }
-    .title-container p {
-        font-size: 1rem;
-        color: #A0AEC0; /* Lighter gray for subtitle */
-    }
-
-    /* --- Chat Messages --- */
-    [data-testid="stChatMessage"] {
-        padding: 1rem 1.25rem;
-        border-radius: 1.25rem; /* Softer radius */
-        margin-bottom: 1rem;
-        max-width: 80%;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Assistant messages */
-    [data-testid="stChatMessage"]:nth-child(even) {
-        background-color: #1A202C !important; /* Dark teal */
-        color: #E2E8F0 !important;
-        margin-right: auto;
-        flex-direction: row;
-    }
-
-    /* User messages */
-    [data-testid="stChatMessage"]:nth-child(odd) {
-        background-color: #2D3748 !important; /* Slightly lighter dark blue-gray */
-        color: #F7FAFC !important;
-        margin-left: auto;
-        flex-direction: row-reverse;
-        position: relative;
-        z-index: 1;
-    }
-    
-    [data-testid="stChatMessage"]:nth-child(odd)::before {
-        content: '';
-        position: absolute;
-        top: -2px; left: -2px; right: -2px; bottom: -2px;
-        background: linear-gradient(90deg, #38B2AC, #4299E1, #9F7AEA, #ED64A6, #38B2AC);
-        background-size: 300%;
-        border-radius: 1.35rem; /* Match parent */
-        z-index: -1;
-        animation: animated-gradient 8s linear infinite;
-        filter: blur(2px); /* Softer glow */
-    }
-
-    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p,
-    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
-        color: inherit !important;
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-
-    /* --- Sidebar --- */
-    [data-testid="stSidebar"] {
-        background: #111827; /* Darker sidebar */
-        border-right: 1px solid #1A202C;
-    }
-    [data-testid="stSidebar"] h3 {
-        color: #90CDF4; /* Soft blue for headings */
-        font-weight: 600;
-    }
-    [data-testid="stSidebar"] .stButton>button {
-        background-color: #2D3748;
-        color: #E2E8F0;
-        border: 1px solid #4A5568;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-        border-radius: 0.75rem;
-        width: 100%;
-        transition: background-color 0.3s, border-color 0.3s;
-    }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        background-color: #4A5568;
-        border-color: #63B3ED;
-    }
-</style>
+    <style>
+        .title-container h1 {
+            font-size: 2.5em; /* Make the title bigger */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add a subtle shadow */
+        }
+        .title-container p {
+            font-size: 1.1em;
+        }
+    </style>
 """, unsafe_allow_html=True)
-
 
 # Custom Title
 st.markdown("""
@@ -176,57 +64,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# Add the firefly animation (no changes here)
-st.markdown("""
-<canvas id="firefly-canvas"></canvas>
-<script>
-    const canvas = document.getElementById('firefly-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const fireflies = [];
-    const numFireflies = 30; // Reduced for a calmer effect
 
-    class Firefly {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.radius = Math.random() * 1.5 + 0.5;
-            this.speedX = (Math.random() - 0.5) * 0.3;
-            this.speedY = (Math.random() - 0.5) * 0.3;
-            this.opacity = Math.random() * 0.4 + 0.3; // More subtle
-        }
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-        }
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 215, 0, ${this.opacity})`; // Gold color
-            ctx.fill();
-        }
-    }
-
-    function init() { for (let i = 0; i < numFireflies; i++) fireflies.push(new Firefly()); }
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (const firefly of fireflies) {
-            firefly.update();
-            firefly.draw();
-        }
-        requestAnimationFrame(animate);
-    }
-    init();
-    animate();
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-</script>
-""", unsafe_allow_html=True)
 
 if "chat_session" not in st.session_state:
     model = genai.GenerativeModel(
