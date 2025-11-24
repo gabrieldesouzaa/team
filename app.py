@@ -53,8 +53,8 @@ Here is the company policy:
 st.markdown("""
     <style>
         .title-container h1 {
-            font-size: 2.5em; /* Make the title bigger */
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add a subtle shadow */
+            font-size: 2.5em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
         }
         .title-container p {
             font-size: 1.1em;
@@ -95,7 +95,12 @@ for message in st.session_state.messages:
                     st.write(f"📄 {file_name}")
 
 # Text input
-prompt = st.text_input("Enter your question here...")
+st.markdown("### 💬 Ask a Question")
+prompt = st.text_input(
+    "Enter your question:",
+    placeholder="e.g., How many PTO days can I get?",
+    help="Type your question and press Enter to get an answer"
+)
 
 # Button
 if st.button("Generate"): 
@@ -121,8 +126,44 @@ with st.container():
             user_input = st.chat_input("Ask about company policy...", key="auto_question_input")
             st.session_state.auto_question = "" # Reset
         else:
-            user_input = st.chat_input("...")
+            user_input = st.chat_input("Enter your question here...")
 
+st.markdown("""
+<style>
+    @keyframes bounce {
+        0%, 20%, 60%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-5px); }
+        80% { transform: translateY(-2px); }
+    }
+    
+    .animated-paperclip {
+        width: 40px !important;
+    }
+    .animated-paperclip button {
+        width: 40px !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 16px !important;
+        transition: all 0.3s ease !important;
+    }
+    .animated-paperclip button:hover {
+        animation: bounce 0.6s ease;
+        background: linear-gradient(45deg, #FFA500, #FF8C00) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+uploaded_files = st.file_uploader(
+    "📎",
+    accept_multiple_files=True,
+    label_visibility="collapsed",
+    key="animated_uploader"
+)
 
 if user_input:
     message_content = {"role": "user", "content": user_input, "files": {}}
@@ -181,34 +222,10 @@ def validate_input(user_input):
         return False, "Question too long. Please keep under 1000 characters."
     return True, ""
 
-# --- Sidebar Content ---
-with st.sidebar:
-    st.subheader("Example Questions")
-    
-    st.markdown("""
-    This HR chatbot can answer questions about:
-    - Work hours & flexible arrangements
-    - Paid Time Off (PTO) policies
-    - Code of conduct
-    - Company policies
-    
-    **Note:** Only answers based on the provided policy document.
-    """)
-    
-    example_questions = [
-        "How many PTO days can I get?",
-        "What are the standard work hours?",
-        "How do I request flexible hours?"
-    ]
 
-    for question in example_questions:
-        if st.button(question, key=question):
-            st.session_state.auto_question = question
-            st.rerun()
-
-    # Clear chat button
-    if st.button("Clear Chat", type="secondary"):
-        st.session_state.messages = []
-        st.session_state.chat_session = model.start_chat(history=[])
-        st.session_state.auto_question = ""
-        st.rerun()
+# Clear chat button
+if st.button("Clear Chat", type="secondary"):
+    st.session_state.messages = []
+    st.session_state.chat_session = model.start_chat(history=[])
+    st.session_state.auto_question = ""
+    st.rerun()
