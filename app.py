@@ -4,12 +4,19 @@ import os
 import PIL.Image
 import io
 
-# Set up Google Generative AI
-try:
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-except KeyError:
-    st.error("GEMINI_API_KEY environment variable not set. Please add it to your Streamlit secrets.")
+# Configure the Gemini API
+API_KEY = os.environ.get("GEMINI_API_KEY")
+
+if not API_KEY:
+    st.error(
+        "🚨 Configuration Error: Please set `GEMINI_API_KEY`."
+    )
     st.stop()
+
+genai.configure(api_key=API_KEY)
+
+MODEL_ID = "gemini-2.0-flash-001" 
+
 
 COMPANY_POLICY = """
 # Innovate Inc. Company Policy
@@ -59,10 +66,9 @@ st.markdown("""
 st.markdown("""
 <div class="title-container">
     <h1>Onboarding HR Assistant</h1>
-    <p>Your friendly guide to company policies at Innovate Inc.</p>
+    <p>Your friendly guide to company policies</p>
 </div>
 """, unsafe_allow_html=True)
-
 
 
 
@@ -88,6 +94,21 @@ for message in st.session_state.messages:
                 else:
                     st.write(f"📄 {file_name}")
 
+# Text input
+prompt = st.text_input("Enter your question here...")
+
+# Button
+if st.button("Generate"): 
+    if prompt:
+        try:
+            model_for_prompt = genai.GenerativeModel(MODEL_ID)
+            response = model_for_prompt.generate_content(contents=prompt)
+            st.write(response.text)
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+        st.warning("Please enter a prompt.")
+
 # Consolidate input area
 with st.container():
     col1, col2 = st.columns([1, 10])
@@ -100,7 +121,7 @@ with st.container():
             user_input = st.chat_input("Ask about company policy...", key="auto_question_input")
             st.session_state.auto_question = "" # Reset
         else:
-            user_input = st.chat_input("Enter your question here...")
+            user_input = st.chat_input("...")
 
 
 if user_input:
