@@ -14,7 +14,6 @@ if not API_KEY:
     st.stop()
 
 genai.configure(api_key=API_KEY)
-MODEL_ID = "gemini-2.0-flash-001" 
 
 # Load Company Policy and System Instruction from files
 try:
@@ -24,6 +23,8 @@ except FileNotFoundError:
     st.error("`company_policy.md` not found.")
     st.stop()
 
+COMPANY_NAME = "Innovate Inc."
+
 try:
     with open("system_instruction.txt", "r") as f:
         SYSTEM_INSTRUCTION_TEMPLATE = f.read()
@@ -32,6 +33,11 @@ except FileNotFoundError:
     st.stop()
 
 SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION_TEMPLATE.format(company_policy=COMPANY_POLICY)
+
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash-001',
+    system_instruction=SYSTEM_INSTRUCTION
+)
 
 import json
 
@@ -73,11 +79,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    system_instruction=SYSTEM_INSTRUCTION
+)
+
 if "chat_session" not in st.session_state:
-    model = genai.GenerativeModel(
-        model_name='gemini-1.5-flash',
-        system_instruction=SYSTEM_INSTRUCTION
-    )
     st.session_state.chat_session = model.start_chat(history=[])
 
 if "messages" not in st.session_state:
@@ -95,18 +102,12 @@ for message in st.session_state.messages:
                 else:
                     st.write(f"📄 {file_name}")
 
-# Text input
-st.markdown("### 💬 Ask a Question")
-prompt = st.text_input(
-    "Enter your question:",
-    placeholder="e.g., How many PTO days can I get?",
-    help="Type your question and press Enter to get an answer"
-)
+
 
 # Add initial greeting if history is empty
 if not st.session_state.messages:
-     initial_greeting = f"Hi! I’m your {COMPANY_NAME} onboarding assistant. How can I help you today?"
-     st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
+    initial_greeting = f"Hi! I’m your {COMPANY_NAME} onboarding assistant. How can I help you today?"
+    st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -120,35 +121,16 @@ if prompt := st.chat_input("Ask about company policies..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Prepare conversation history for the API
-    # Prepend system prompt as first message
-    api_history = [
-        {"role": "user", "parts": [get_system_prompt()]}
-    ] + [
-        {"role": "user" if msg["role"] == "user" else "model", "parts": [msg["content"]]}
-        for msg in st.session_state.messages
-    ]
-
     # Get response from Gemini
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         try:
-            model_for_prompt = genai.GenerativeModel(MODEL_ID)
-            response = model_for_prompt.generate_content(contents=prompt)
-            st.write(response.text)
+            response = st.session_state.chat_session.send_message(prompt)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            message_placeholder.markdown(response.text)
+            save_chat_history(st.session_state.messages)
         except Exception as e:
             st.error(f"An error occurred: {e}")
-    else:
-        st.warning("Please enter a prompt.")
-
-
-# File uploader for images and documents
-uploaded_files = st.file_uploader(
-    "📎",
-    accept_multiple_files=True,
-    label_visibility="collapsed",
-    key="animated_uploader"
-)
 
 # history management to prevent infinite growth
 MAX_HISTORY = 50
@@ -174,3 +156,11 @@ if st.button("Clear History", type="secondary"):
     if os.path.exists(CHAT_HISTORY_FILE):
         os.remove(CHAT_HISTORY_FILE)
     st.rerun()
+
+# File uploader for images and documents
+uploaded_files = st.file_uploader(
+    "📎",
+    accept_multiple_files=True,
+    label_visibility="collapsed",
+    key="animated_uploader"
+)
