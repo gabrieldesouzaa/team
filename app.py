@@ -14,6 +14,7 @@ if not API_KEY:
     st.stop()
 
 genai.configure(api_key=API_KEY)
+MODEL_ID = "gemini-2.0-flash-001" 
 
 # Load Company Policy and System Instruction from files
 try:
@@ -78,31 +79,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
-model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash',
-    system_instruction=SYSTEM_INSTRUCTION
-)
-
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = model.start_chat(history=[])
-
+# Initialize chat history in session state if it doesn't exist
 if "messages" not in st.session_state:
-    st.session_state.messages = load_chat_history()
-
-for message in st.session_state.messages:
-    avatar = "🧑" if message["role"] == "user" else "🤖"
-    with st.chat_message(message["role"], avatar=avatar):
-        if "content" in message:
-            st.markdown(message["content"])
-        if "files" in message:
-            for file_name, file_data in message["files"].items():
-                if "image" in file_data["type"]:
-                    st.image(file_data["data"], caption=file_name, width=200)
-                else:
-                    st.write(f"📄 {file_name}")
-
-
+    st.session_state.messages = []
 
 # Add initial greeting if history is empty
 if not st.session_state.messages:
@@ -114,23 +93,26 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat Input
-if prompt := st.chat_input("Ask about company policies..."):
-    # Add user message to display
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+# Text input
+st.markdown("### 💬 Ask a Question")
+prompt = st.text_input(
+    "Enter your question:",
+    placeholder="e.g., How many PTO days can I get?",
+    help="Type your question and press Enter to get an answer"
+)
 
-    # Get response from Gemini
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
+# Button
+if st.button("Generate"): 
+    if prompt:
         try:
-            response = st.session_state.chat_session.send_message(prompt)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
-            message_placeholder.markdown(response.text)
-            save_chat_history(st.session_state.messages)
+            model_for_prompt = genai.GenerativeModel(MODEL_ID)
+            response = model_for_prompt.generate_content(contents=prompt)
+            st.write(response.text)
         except Exception as e:
             st.error(f"An error occurred: {e}")
+    else:
+        st.warning("Please enter a prompt.")
+
 
 # history management to prevent infinite growth
 MAX_HISTORY = 50
@@ -148,6 +130,14 @@ def validate_input(user_input):
     return True, ""
 
 
+# File uploader for images and documents
+uploaded_files = st.file_uploader(
+    "📎",
+    accept_multiple_files=True,
+    label_visibility="collapsed",
+    key="animated_uploader"
+)
+
 # Clear history button
 if st.button("Clear History", type="secondary"):
     st.session_state.messages = []
@@ -156,11 +146,3 @@ if st.button("Clear History", type="secondary"):
     if os.path.exists(CHAT_HISTORY_FILE):
         os.remove(CHAT_HISTORY_FILE)
     st.rerun()
-
-# File uploader for images and documents
-uploaded_files = st.file_uploader(
-    "📎",
-    accept_multiple_files=True,
-    label_visibility="collapsed",
-    key="animated_uploader"
-)
