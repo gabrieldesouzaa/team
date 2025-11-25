@@ -1,8 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-import PIL.Image
-import io
 
 # Configure the Gemini API
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -14,41 +12,43 @@ if not API_KEY:
     st.stop()
 
 genai.configure(api_key=API_KEY)
-
 MODEL_ID = "gemini-2.0-flash-001" 
 
+# Load Company Policy and System Instruction from files
+try:
+    with open("company_policy.md", "r") as f:
+        COMPANY_POLICY = f.read()
+except FileNotFoundError:
+    st.error("`company_policy.md` not found.")
+    st.stop()
 
-COMPANY_POLICY = """
-# Innovate Inc. Company Policy
+try:
+    with open("system_instruction.txt", "r") as f:
+        SYSTEM_INSTRUCTION_TEMPLATE = f.read()
+except FileNotFoundError:
+    st.error("`system_instruction.txt` not found.")
+    st.stop()
 
-## 1.  Work Hours
--   Standard work hours are 9:00 AM to 5:00 PM, Monday to Friday.
--   Flexible working hours can be arranged with your manager.
+SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION_TEMPLATE.format(company_policy=COMPANY_POLICY)
 
-## 2.  Paid Time Off (PTO)
--   Employees receive 20 days of PTO per year.
--   PTO requests must be submitted at least two weeks in advance.
+import json
 
-## 3.  Code of Conduct
--   All employees are expected to maintain a professional and respectful work environment.
--   Harassment of any kind will not be tolerated.
-"""
+# Chat History Management
+CHAT_HISTORY_FILE = "chat_history.json"
 
-SYSTEM_INSTRUCTION = f"""You are an expert HR assistant for "Innovate Inc.". Your sole purpose is to answer employee questions about the company policy. 
-You must base your answers strictly and exclusively on the provided company policy document. 
-If a user uploads a file, you can also answer questions about it.
-Do not use any external knowledge or make assumptions. 
-If a question cannot be answered from the policy or the file, state that the information is not available in the provided documents and do not apologize. 
-Keep your answers concise, clear, and professional. Format your answers using markdown for better readability where appropriate (e.g., lists, bold text).
+def save_chat_history(messages):
+    """Saves the chat history to a JSON file."""
+    with open(CHAT_HISTORY_FILE, "w") as f:
+        json.dump(messages, f)
 
-Here is the company policy:
----
-{COMPANY_POLICY}
----
-"""
+def load_chat_history():
+    """Loads the chat history from a JSON file."""
+    if os.path.exists(CHAT_HISTORY_FILE):
+        with open(CHAT_HISTORY_FILE, "r") as f:
+            return json.load(f)
+    return []
 
-# --- Streamlit UI ---
-
+# Streamlit UI
 # Custom CSS for fine-tuning elements
 st.markdown("""
     <style>
@@ -71,7 +71,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-
 if "chat_session" not in st.session_state:
     model = genai.GenerativeModel(
         model_name='gemini-1.5-flash',
@@ -80,7 +79,7 @@ if "chat_session" not in st.session_state:
     st.session_state.chat_session = model.start_chat(history=[])
 
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = load_chat_history()
 
 for message in st.session_state.messages:
     avatar = "🧑" if message["role"] == "user" else "🤖"
@@ -114,50 +113,8 @@ if st.button("Generate"):
     else:
         st.warning("Please enter a prompt.")
 
-# Consolidate input area
-with st.container():
-    col1, col2 = st.columns([1, 10])
-    with col1:
-        uploaded_files = st.file_uploader(
-            "📎", accept_multiple_files=True, label_visibility="collapsed"
-        )
-    with col2:
-        if "auto_question" in st.session_state and st.session_state.auto_question:
-            user_input = st.chat_input("Ask about company policy...", key="auto_question_input")
-            st.session_state.auto_question = "" # Reset
-        else:
-            user_input = st.chat_input("Enter your question here...")
 
-st.markdown("""
-<style>
-    @keyframes bounce {
-        0%, 20%, 60%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-5px); }
-        80% { transform: translateY(-2px); }
-    }
-    
-    .animated-paperclip {
-        width: 40px !important;
-    }
-    .animated-paperclip button {
-        width: 40px !important;
-        height: 40px !important;
-        min-height: 40px !important;
-        padding: 0 !important;
-        border-radius: 10px !important;
-        background: linear-gradient(45deg, #FFD700, #FFA500) !important;
-        border: none !important;
-        color: white !important;
-        font-size: 16px !important;
-        transition: all 0.3s ease !important;
-    }
-    .animated-paperclip button:hover {
-        animation: bounce 0.6s ease;
-        background: linear-gradient(45deg, #FFA500, #FF8C00) !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
+# File uploader for images and documents
 uploaded_files = st.file_uploader(
     "📎",
     accept_multiple_files=True,
@@ -165,54 +122,12 @@ uploaded_files = st.file_uploader(
     key="animated_uploader"
 )
 
-if user_input:
-    message_content = {"role": "user", "content": user_input, "files": {}}
-    
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            bytes_data = uploaded_file.read()
-            message_content["files"][uploaded_file.name] = {
-                "type": uploaded_file.type,
-                "data": bytes_data
-            }
-
-    st.session_state.messages.append(message_content)
-
-    with st.chat_message("user", avatar="🧑"):
-        st.markdown(user_input)
-        if uploaded_files:
-            for file_name, file_data in message_content["files"].items():
-                if "image" in file_data["type"]:
-                    st.image(file_data["data"], caption=file_name, width=200)
-                else:
-                    st.write(f"📄 {file_name}")
-
-
-    with st.chat_message("assistant", avatar="🤖"):
-        with st.spinner("Thinking..."):
-            try:
-                contents = [user_input]
-                if uploaded_files:
-                    for uploaded_file in uploaded_files:
-                        if "image" in uploaded_file.type:
-                            img = PIL.Image.open(io.BytesIO(message_content["files"][uploaded_file.name]["data"]))
-                            contents.append(img)
-                        else: # For now, treat other files as text
-                            contents.append(message_content["files"][uploaded_file.name]["data"].decode())
-                
-                response = st.session_state.chat_session.send_message(contents)
-                assistant_response = response.text
-                st.markdown(assistant_response)
-                st.session_state.messages.append({"role": "assistant", "content": assistant_response})
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-                st.session_state.messages.append({"role": "assistant", "content": f"Error: {e}"})
-
-# Add history management to prevent infinite growth
+# history management to prevent infinite growth
 MAX_HISTORY = 50
 
 if len(st.session_state.messages) > MAX_HISTORY:
     st.session_state.messages = st.session_state.messages[-MAX_HISTORY:]
+    save_chat_history(st.session_state.messages)
 
 def validate_input(user_input):
     """Basic input validation"""
@@ -223,9 +138,11 @@ def validate_input(user_input):
     return True, ""
 
 
-# Clear chat button
-if st.button("Clear Chat", type="secondary"):
+# Clear history button
+if st.button("Clear History", type="secondary"):
     st.session_state.messages = []
     st.session_state.chat_session = model.start_chat(history=[])
     st.session_state.auto_question = ""
+    if os.path.exists(CHAT_HISTORY_FILE):
+        os.remove(CHAT_HISTORY_FILE)
     st.rerun()
