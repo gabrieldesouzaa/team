@@ -1,6 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+from dotenv import load_dotenv
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 # Configure the Gemini API
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -101,9 +103,35 @@ prompt = st.text_input(
     help="Type your question and press Enter to get an answer"
 )
 
-# Button
-if st.button("Generate"): 
-    if prompt:
+# Add initial greeting if history is empty
+if not st.session_state.messages:
+     initial_greeting = f"Hi! I’m your {COMPANY_NAME} onboarding assistant. How can I help you today?"
+     st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
+
+# Display chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Chat Input
+if prompt := st.chat_input("Ask about company policies..."):
+    # Add user message to display
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Prepare conversation history for the API
+    # Prepend system prompt as first message
+    api_history = [
+        {"role": "user", "parts": [get_system_prompt()]}
+    ] + [
+        {"role": "user" if msg["role"] == "user" else "model", "parts": [msg["content"]]}
+        for msg in st.session_state.messages
+    ]
+
+    # Get response from Gemini
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
         try:
             model_for_prompt = genai.GenerativeModel(MODEL_ID)
             response = model_for_prompt.generate_content(contents=prompt)

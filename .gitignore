@@ -20,4 +20,6 @@ wheels/
 .DS_Store
 
 # Other
+.env\n# Secrets
+.env
 .env
