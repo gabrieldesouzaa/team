@@ -1,94 +1,107 @@
 import streamlit as st
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-import google.generativeai as genai
+# Configure the Gemini API
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
-load_dotenv()
+if not API_KEY:
+    st.error(
+        "🚨 Configuration Error: Please set `GEMINI_API_KEY`."
+    )
+    st.stop()
 
-# --- CSS from style.css (embedded) ---
-st.markdown("""
-<style>
-* { box-sizing: border-box; }
-body {
-  margin: 0; font-family: system-ui, -apple-system, sans-serif;
-  background: #f3f4f6; display: flex; justify-content: center;
-  align-items: center; min-height: 100vh;
-}
-.app-container {
-  background: #ffffff; width: 100%; max-width: 800px; height: 90vh;
-  border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-.app-header {
-  padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;
-}
-.app-header h1 { margin: 0 0 4px; font-size: 1.3rem; }
-.app-header p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
-/* Streamlit Specific Overrides */
-div.stApp > header { display: none; }
-.stChatMessage { background: none !important; }
-</style>
-""", unsafe_allow_html=True)
+genai.configure(api_key=API_KEY)
+MODEL_ID = "gemini-2.0-flash-001" 
 
-# --- Constants ---
-HANDBOOK_TEXT = """
-- Work hours: 9 AM to 5 PM, Monday to Friday.
-- PTO: 20 days per year.
-- Holidays: All major US holidays are observed.
-- Dress code: Business casual.
-- Remote work: Permitted two days a week.
-- IT usage: Company equipment is for business purposes only.
-""".strip()
-COMPANY_NAME = "FutureCorp"
-DENY_MESSAGE = (
-    "I can only answer questions about new employee onboarding and official company policies. "
-    "For other topics, please contact HR."
-)
-MODEL_ID = "gemini-2.5-flash"
-
-# --- System Prompt ---
-def get_system_prompt():
-    return f"""
-You are an HR onboarding assistant for {COMPANY_NAME}. Your scope is to ONLY answer questions about new employee onboarding and the official company policies detailed in the handbook below. If asked anything else, you MUST respond with: "{DENY_MESSAGE}"
-
-COMPANY HANDBOOK:
----
-{HANDBOOK_TEXT}
----
-""".strip()
-
-# --- Gemini API Configuration ---
-# Read and sanitize GEMINI_API_KEY (strip surrounding quotes/newlines)
-api_key = os.environ.get("GEMINI_API_KEY", "")
-api_key = api_key.strip().strip('"').strip("'")
-if not api_key:
-    raise RuntimeError("GEMINI_API_KEY environment variable is not set or is empty. Please set it in your .env or environment.")
-if len(api_key) < 20:
-    raise RuntimeError("GEMINI_API_KEY appears to be malformed or too short. Check your .env formatting.")
+# Load Company Policy and System Instruction from files
 try:
-    genai.configure(api_key=api_key)
-except Exception as e:
-    raise RuntimeError(f"Failed to configure Gemini client: {e}")
-model = genai.GenerativeModel(MODEL_ID)
+    with open("company_policy.md", "r") as f:
+        COMPANY_POLICY = f.read()
+except FileNotFoundError:
+    st.error("`company_policy.md` not found.")
+    st.stop()
 
-# --- Streamlit UI ---
-st.set_page_config(layout="centered", page_title=f"{COMPANY_NAME} Onboarding")
+try:
+    with open("system_instruction.txt", "r") as f:
+        SYSTEM_INSTRUCTION_TEMPLATE = f.read()
+except FileNotFoundError:
+    st.error("`system_instruction.txt` not found.")
+    st.stop()
 
-# Custom HTML Structure
-st.markdown(f"""
-<div class="app-container">
-    <header class="app-header">
-        <h1>Onboarding Assistant</h1>
-        <p>Ask about new-hire onboarding and company policies</p>
-    </header>
+SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION_TEMPLATE.format(company_policy=COMPANY_POLICY)
+
+import json
+
+# Chat History Management
+CHAT_HISTORY_FILE = "chat_history.json"
+
+def save_chat_history(messages):
+    """Saves the chat history to a JSON file."""
+    with open(CHAT_HISTORY_FILE, "w") as f:
+        json.dump(messages, f)
+
+def load_chat_history():
+    """Loads the chat history from a JSON file."""
+    if os.path.exists(CHAT_HISTORY_FILE):
+        with open(CHAT_HISTORY_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+# Streamlit UI
+# Custom CSS for fine-tuning elements
+st.markdown("""
+    <style>
+        .title-container h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .title-container p {
+            font-size: 1.1em;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
-# Initialize Chat History
+# Custom Title
+st.markdown("""
+<div class="title-container">
+    <h1>Onboarding HR Assistant</h1>
+    <p>Your friendly guide to company policies</p>
+</div>
+""", unsafe_allow_html=True)
+
+
+if "chat_session" not in st.session_state:
+    model = genai.GenerativeModel(
+        model_name='gemini-1.5-flash',
+        system_instruction=SYSTEM_INSTRUCTION
+    )
+    st.session_state.chat_session = model.start_chat(history=[])
+
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = load_chat_history()
+
+for message in st.session_state.messages:
+    avatar = "🧑" if message["role"] == "user" else "🤖"
+    with st.chat_message(message["role"], avatar=avatar):
+        if "content" in message:
+            st.markdown(message["content"])
+        if "files" in message:
+            for file_name, file_data in message["files"].items():
+                if "image" in file_data["type"]:
+                    st.image(file_data["data"], caption=file_name, width=200)
+                else:
+                    st.write(f"📄 {file_name}")
+
+# Text input
+st.markdown("### 💬 Ask a Question")
+prompt = st.text_input(
+    "Enter your question:",
+    placeholder="e.g., How many PTO days can I get?",
+    help="Type your question and press Enter to get an answer"
+)
 
 # Add initial greeting if history is empty
 if not st.session_state.messages:
@@ -120,28 +133,44 @@ if prompt := st.chat_input("Ask about company policies..."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         try:
-            response = model.generate_content(
-                api_history,
-                generation_config={
-                    "temperature": 0.4,
-                    "max_output_tokens": 512,
-                },
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
-            )
-            full_response = response.text
-            message_placeholder.markdown(full_response)
+            model_for_prompt = genai.GenerativeModel(MODEL_ID)
+            response = model_for_prompt.generate_content(contents=prompt)
+            st.write(response.text)
         except Exception as e:
             st.error(f"An error occurred: {e}")
-            full_response = "Sorry, I ran into an error. Please try again."
-            message_placeholder.markdown(full_response)
-    
-    # Add assistant response to display history
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    else:
+        st.warning("Please enter a prompt.")
 
-# Close the main app div
-st.markdown('</div>', unsafe_allow_html=True)
+
+# File uploader for images and documents
+uploaded_files = st.file_uploader(
+    "📎",
+    accept_multiple_files=True,
+    label_visibility="collapsed",
+    key="animated_uploader"
+)
+
+# history management to prevent infinite growth
+MAX_HISTORY = 50
+
+if len(st.session_state.messages) > MAX_HISTORY:
+    st.session_state.messages = st.session_state.messages[-MAX_HISTORY:]
+    save_chat_history(st.session_state.messages)
+
+def validate_input(user_input):
+    """Basic input validation"""
+    if not user_input or user_input.strip() == "":
+        return False, "Type your question here."
+    if len(user_input) > 1000:
+        return False, "Question too long. Please keep under 1000 characters."
+    return True, ""
+
+
+# Clear history button
+if st.button("Clear History", type="secondary"):
+    st.session_state.messages = []
+    st.session_state.chat_session = model.start_chat(history=[])
+    st.session_state.auto_question = ""
+    if os.path.exists(CHAT_HISTORY_FILE):
+        os.remove(CHAT_HISTORY_FILE)
+    st.rerun()
