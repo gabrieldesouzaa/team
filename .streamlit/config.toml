@@ -1,0 +1,6 @@
+[theme]
+primaryColor="#90CAF9" # A soft blue for primary elements
+backgroundColor="#1a1a2e" # Cozy dark blue background
+secondaryBackgroundColor="#22224fff" # Slightly lighter dark blue for secondary elements/containers
+textColor="#e0e0e0" # Light gray text
+font="sans serif" # Streamlit's default sans serif, or specify a custom font family if desired
