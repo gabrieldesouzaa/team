@@ -73,9 +73,50 @@ def get_system_prompt(question: str = "", user_state: str = ""):
         handbook_excerpt = HANDBOOK_TEXT[:10000] + ("\n... [truncated] ..." if len(HANDBOOK_TEXT) > 10000 else "")
     
     return f"""
-You are an HR onboarding assistant for {COMPANY_NAME}. Your scope is to answer questions about new employee onboarding, official company policies (see handbook below), and—if PERSONAL_DATA is provided—answer personal questions about the authenticated user using that data. If asked anything else and no PERSONAL_DATA is provided, you MUST respond with: "{DENY_MESSAGE}"
+You are an HR onboarding assistant for {COMPANY_NAME}. 
 
-If PERSONAL_DATA is provided, use it to answer personal/account-specific questions (e.g., PTO, pay rate, employee info) for the authenticated user.
+YOU ARE AUTHORIZED AND EXPECTED TO ANSWER:
+1. New employee onboarding and orientation questions
+2. Company policies, procedures, and guidelines from the handbook
+3. Employee benefits (PTO, sick leave, insurance, 401k, discounts, perks, accruals)
+4. Work schedules, shifts, time tracking, and leave policies
+5. Compensation, pay rates, payroll, and salary information
+6. Company culture, values, workplace conduct, and dress code
+7. Personal/account-specific information when PERSONAL_DATA is provided
+
+IMPORTANT PERMISSION RULES:
+- You HAVE PERMISSION to answer ALL work-related questions from the handbook
+- You HAVE PERMISSION to discuss benefits, discounts, PTO, pay, schedules, and policies
+- When PERSONAL_DATA is provided, you MUST answer personal questions using that data
+- ONLY refuse questions about non-work topics (weather, news, sports, general knowledge)
+- If a question relates to employment, benefits, or company policies, YOU SHOULD ANSWER IT
+
+USING PERSONAL_DATA:
+- When PERSONAL_DATA is provided, it contains the user's "state" field
+- Use the state to determine which PTO Model applies (check the state/PTO model chart in the handbook)
+- For questions like "what PTO model applies to me?" or "how much PTO do I get?", you MUST:
+  1. Look at the "state" field in PERSONAL_DATA
+  2. Find that state in the handbook's state/PTO model chart
+  3. Identify which Model (1-5) applies
+  4. Provide the specific PTO accrual details for that model
+- Example: If PERSONAL_DATA shows "state": "California", you should explain that California follows Model 4 and provide Model 4 PTO details
+
+SECURITY RULES:
+- ONLY provide personal data (specific PTO balance, pay rate, employee number) for the AUTHENTICATED user
+- NEVER provide another employee's personal information (their specific PTO hours, pay rate, employee number, etc.)
+- When asked about another employee's benefits/policies (discount, general PTO policy), explain that all employees follow the same company policies and answer with the general policy
+- Example: "What's Bob's discount?" → "All employees receive the same 40% discount on regular-priced merchandise"
+- General policy questions do NOT require authentication
+- Personal questions ("my PTO", "my pay rate") require PERSONAL_DATA
+
+RESPONSE STYLE:
+- Keep responses BRIEF and CONCISE (2-4 sentences typically)
+- Provide direct answers with key facts and numbers
+- Only quote handbook verbatim if user asks for "exact wording", "quote", or "citation"
+- Use conversational, clear language
+- Always include specific numbers when discussing percentages, amounts, hours, or days
+
+For non-work topics (weather, news, entertainment), respond with: "{DENY_MESSAGE}"
 
 COMPANY HANDBOOK (relevant sections):
 ---
@@ -170,17 +211,76 @@ def save_personal_data(data: dict):
 def needs_authentication(question: str) -> bool:
     """Heuristic: return True if the user is asking for personal/account-specific info.
 
-    This is intentionally conservative: it looks for first-person pronouns and
-    common personal/account keywords.
+    Recognizes first-person pronouns, possessives, and common personal/work-related keywords.
     """
     if not question:
         return False
     q = question.lower()
-    personal_triggers = [" my ", "my ", " me ", "mine", "myself", "on file", "on record", "account", "payroll", "payout", "balance", "pay stub", "email on file", "phone on file", "what is my", "show me my", "do i have", "am i", "my pto", "my balance"]
+    
+    # Self-referential words and pronouns
+    personal_triggers = [
+        " my ", "my ", " me ", " i ", "mine", "myself", " i'm ", " i am ",
+        "do i ", "am i ", "can i ", "will i ", "should i ", "have i ",
+        "what's my", "what is my", "show me my", "tell me my", "get my",
+        "where is my", "when is my", "how much is my", "how many"
+    ]
+    
+    # Personal data and work-related keywords that need authentication
+    work_triggers = [
+        "pto", "vacation", "sick time", "sick leave", "sick day",
+        "pay rate", "salary", "wage", "payroll", "paycheck", "pay stub",
+        "employee number", "employee id", "job title", "position",
+        "benefits", "insurance", "coverage", "401k", "retirement",
+        "email on file", "phone on file", "address on file", "on record",
+        "balance", "accrual", "hours", "days off", "time off",
+        "state", "location", "home address", "contact info",
+        "disability", "accommodation", "schedule", "shift"
+    ]
+    
+    # Check for personal triggers - these almost always need auth
     for t in personal_triggers:
         if t in q:
             return True
+    
+    # For work triggers, only require auth if combined with personal context
+    # This allows general questions about discounts/benefits without auth
+    for t in work_triggers:
+        if t in q:
+            # Check if it's asking about "my" or personal info
+            if any(p in q for p in [" my ", " i ", " me ", "mine"]):
+                return True
+    
     return False
+
+
+def is_asking_about_other_employee(question: str) -> tuple[bool, str]:
+    """Detect if question is about another specific employee.
+    
+    Returns (True, employee_name) if asking about someone else, (False, "") otherwise.
+    """
+    if not question:
+        return False, ""
+    
+    q = question.lower()
+    
+    # Common employee names to check (can be expanded)
+    employee_patterns = [
+        (r"\bbob'?s?\b", "bob"),
+        (r"\balice'?s?\b", "alice"),
+        (r"\bjohn'?s?\b", "john"),
+        (r"\bmary'?s?\b", "mary"),
+        (r"\bsarah'?s?\b", "sarah"),
+    ]
+    
+    for pattern, name in employee_patterns:
+        if re.search(pattern, q):
+            return True, name
+    
+    # Also check for "someone else", "other employee", etc.
+    if any(phrase in q for phrase in ["someone else", "other employee", "another employee", "another person"]):
+        return True, "another employee"
+    
+    return False, ""
 
 
 def _tokenize(text: str):
@@ -188,65 +288,200 @@ def _tokenize(text: str):
     return re.findall(r"\w+", text.lower())
 
 
+def _extract_phrases(text: str):
+    """Extract 2-3 word phrases from text for better matching."""
+    words = _tokenize(text)
+    phrases = []
+    # Add single words
+    phrases.extend(words)
+    # Add 2-word phrases
+    for i in range(len(words) - 1):
+        phrases.append(f"{words[i]} {words[i+1]}")
+    # Add 3-word phrases
+    for i in range(len(words) - 2):
+        phrases.append(f"{words[i]} {words[i+1]} {words[i+2]}")
+    return phrases
+
+
+def _expand_query(question: str):
+    """Expand query with synonyms and related terms for better matching."""
+    q = question.lower()
+    expansions = set(_tokenize(q))
+    
+    # Common synonym mappings for HR/benefits terms
+    synonyms = {
+        "discount": ["discount", "savings", "employee purchase", "price reduction", "associate discount"],
+        "pto": ["pto", "paid time off", "vacation", "time off", "leave", "days off"],
+        "sick": ["sick", "sick leave", "sick time", "sick day", "illness"],
+        "pay": ["pay", "salary", "wage", "compensation", "paycheck", "earnings"],
+        "benefit": ["benefit", "benefits", "perks", "coverage", "insurance"],
+        "schedule": ["schedule", "shift", "hours", "time", "work hours"],
+        "accrual": ["accrual", "accrue", "accrued", "earn", "accumulate"],
+        "policy": ["policy", "policies", "rule", "rules", "guideline"],
+        "dress code": ["dress code", "attire", "clothing", "uniform", "appearance"],
+        "bereavement": ["bereavement", "funeral", "death", "grieving"],
+        "401k": ["401k", "retirement", "savings plan", "pension"],
+        "model": ["model", "pto", "plan", "category", "tier", "version"],
+    }
+    
+    # Add synonyms for words in the question
+    for word, syns in synonyms.items():
+        if word in q:
+            expansions.update(syns)
+    
+    return list(expansions)
+
+
 def extract_relevant_sections(question: str, handbook_text: str, max_chars: int = 10000, user_state: str = "") -> str:
     """Extract the most relevant handbook sections for the given question.
     
-    Splits handbook by paragraphs, scores each by keyword overlap with the question,
-    and returns top sections up to max_chars. If user_state is provided, boosts
-    sections that mention that state.
+    Uses multi-word phrase matching, synonym expansion, and weighted scoring
+    to find the best matching sections from the handbook. Keeps related lines
+    together to preserve context and numeric details.
     """
     if not handbook_text or not question:
         return handbook_text[:max_chars] if handbook_text else ""
     
-    # Split into sections by double newlines (paragraphs)
-    sections = [s.strip() for s in re.split(r"\n{2,}", handbook_text) if s.strip()]
+    # Split into sections - keep related content together
+    sections = []
+    
+    # First split by double newlines (paragraphs)
+    parts = re.split(r"\n{2,}", handbook_text)
+    
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        
+        # Keep sections under 1500 chars together (preserves context)
+        if len(part) <= 1500:
+            sections.append(part)
+        else:
+            # For very long sections, split more carefully
+            lines = part.split('\n')
+            current_chunk = []
+            current_len = 0
+            
+            for line in lines:
+                line = line.strip()
+                if not line or len(line) < 20:
+                    continue
+                
+                # Keep building chunk if under 800 chars
+                if current_len + len(line) < 800:
+                    current_chunk.append(line)
+                    current_len += len(line)
+                else:
+                    # Save current chunk and start new one
+                    if current_chunk:
+                        sections.append('\n'.join(current_chunk))
+                    current_chunk = [line]
+                    current_len = len(line)
+            
+            # Add final chunk
+            if current_chunk:
+                sections.append('\n'.join(current_chunk))
+    
     if not sections:
         return handbook_text[:max_chars]
     
-    # Tokenize question
-    q_tokens = set(_tokenize(question))
-    if not q_tokens:
-        return handbook_text[:max_chars]
+    # Get expanded query terms (with synonyms)
+    query_terms = _expand_query(question)
+    query_phrases = _extract_phrases(question)
     
-    # Score each section by keyword overlap
+    # Score each section
     scored = []
     for section in sections:
-        s_tokens = _tokenize(section)
-        if not s_tokens:
+        section_lower = section.lower()
+        section_tokens = _tokenize(section)
+        
+        if not section_tokens:
             continue
-        # Count overlapping keywords
-        overlap = sum(Counter(s_tokens)[t] for t in q_tokens)
         
-        # Boost score if user's state is mentioned in this section
-        state_boost = 0
+        # Calculate multiple relevance signals
+        score = 0
+        
+        # 1. Exact phrase matching (highest weight)
+        for phrase in query_phrases:
+            if phrase in section_lower:
+                # Longer phrases get more weight
+                phrase_len = len(phrase.split())
+                score += phrase_len * 5
+        
+        # 2. Individual term frequency (with synonyms)
+        term_freq = Counter(section_tokens)
+        for term in query_terms:
+            if term in section_lower:
+                score += term_freq.get(term, 0) * 2
+        
+        # 3. Term overlap score
+        overlap = len(set(query_terms) & set(section_tokens))
+        score += overlap
+        
+        # 4. Boost for state match and state/model chart
         if user_state:
-            if user_state.lower() in section.lower():
-                state_boost = 10  # Strong boost for state match
+            state_lower = user_state.lower()
+            # Strong boost if state name appears
+            if state_lower in section_lower:
+                score += 20
+            # Also boost if this looks like the state/PTO model chart
+            if 'pto model' in section_lower and 'state' in section_lower:
+                score += 25  # Very high boost for the mapping table
+            # If asking about PTO/model and user has a state, boost model sections
+            if any(term in question.lower() for term in ['pto', 'model', 'time off', 'vacation']):
+                # Boost sections that mention any model number
+                if re.search(r'model\s+[1-5]', section_lower):
+                    score += 10
         
-        final_score = overlap + state_boost
-        scored.append((final_score, section))
+        # 5. Boost for section headings/titles (ALL CAPS or title-like)
+        first_line = section.split('\n')[0] if '\n' in section else section
+        if first_line.isupper() or (len(first_line) < 100 and first_line and first_line[0].isupper()):
+            # This might be a heading - boost if it matches
+            if any(term in first_line.lower() for term in query_terms[:5]):
+                score += 5
+        
+        # 6. Boost sections with numbers/percentages (likely contain specific details)
+        if re.search(r'\d+%|\d+\s*percent|\$\d+|\d+\s*hours?|\d+\s*days?', section):
+            if score > 0:  # Only boost if already relevant
+                score += 2
+        
+        scored.append((score, section))
     
     if not scored:
         return handbook_text[:max_chars]
     
-    # Sort by relevance (highest first) and concatenate top sections
+    # Sort by relevance (highest first)
     scored.sort(key=lambda x: x[0], reverse=True)
+    
+    # Take top sections up to max_chars
     result_parts = []
     total_len = 0
+    seen_content = set()  # Avoid duplicates
     
     for score, section in scored:
+        # Skip if score is 0 and we already have results
         if score == 0 and result_parts:
-            # Stop if we have some results and next sections aren't relevant
             break
+        
+        # Skip near-duplicates
+        section_sig = section[:100].lower()
+        if section_sig in seen_content:
+            continue
+        seen_content.add(section_sig)
+        
         piece = section + "\n\n"
         if total_len + len(piece) > max_chars:
-            # Add partial section if space remains
             remain = max_chars - total_len
-            if remain > 100:
+            if remain > 200:  # Only add if we have meaningful space
                 result_parts.append(piece[:remain])
             break
+        
         result_parts.append(piece)
         total_len += len(piece)
+        
+        # Take top 25 sections max
+        if len(result_parts) >= 25:
+            break
     
     result = "".join(result_parts).strip()
     return result if result else handbook_text[:max_chars]
@@ -288,29 +523,21 @@ def _extract_response_text(response) -> str:
     except Exception:
         return "(no assistant text returned)"
 
-# Create a test account automatically if none exists so you can verify quickly.
+# Create test accounts automatically if none exists so you can verify quickly.
 # Test credentials:
-#   username: testuser
-#   passphrase: TestPass123!
-TEST_USERNAME = "testuser"
-TEST_PASSPHRASE = "TestPass123!"
+#   username: testuser / passphrase: TestPass123!
+#   username: bob / passphrase: BobPass456!
+# Personal data for all users is stored in personal_data.json
+TEST_USERS = {
+    "testuser": "TestPass123!",
+    "bob": "BobPass456!"
+}
+
 users = _load_json(_USERS_FILE)
-if TEST_USERNAME not in users:
-    create_user(TEST_USERNAME, TEST_PASSPHRASE)
-    pdata = load_personal_data()
-    pdata.setdefault(TEST_USERNAME, {
-        "email": "testuser@example.com",
-        "phone": "555-0100",
-        "state": "Ohio",
-        "home_address": "123 Main St, Columbus, OH",
-        "pay_rate": "15.00",
-        "hours_pto": 40,
-        "hours_sick_time": 40,
-        "employee_number": "1001",
-        "job_title": "Sales Associate",
-        "disability": "None",
-    })
-    save_personal_data(pdata)
+
+for username, passphrase in TEST_USERS.items():
+    if username not in users:
+        create_user(username, passphrase)
 
 # Initialize Session state for auth
 if "auth_user" not in st.session_state:
@@ -416,7 +643,14 @@ if prompt := st.chat_input("Ask about company policies..."):
                 st.session_state.auth_user = username.strip().lower()
                 st.session_state.auth_ok = True
                 st.session_state.login_attempts = 0
-                reply = f"Authenticated as {username}."
+                
+                # Load and store personal data in session for this user
+                personal = load_personal_data()
+                me = personal.get(st.session_state.auth_user, {})
+                st.session_state.user_personal_data = me
+                
+                # Provide confirmation with personal data context
+                reply = f"Authenticated as {username}. I now have access to your personal information and can answer questions about your specific benefits, PTO, pay rate, and other account details."
                 st.session_state.messages.append({"role": "assistant", "content": reply})
                 with st.chat_message("assistant"):
                     st.markdown(reply)
@@ -425,12 +659,17 @@ if prompt := st.chat_input("Ask about company policies..."):
                 if pq:
                     st.session_state.pending_protected_question = None
                     # generate answer including personal data
-                    personal = load_personal_data()
-                    me = personal.get(st.session_state.auth_user, {})
                     user_state = me.get("state", "")
+                    state_info = me.get("state", "Unknown")
+                    personal_data_msg = f"""PERSONAL_DATA: {json.dumps(me)}
+
+CRITICAL INSTRUCTION: The user's state is "{state_info}". When answering questions about PTO models, benefits, or policies that vary by location, you MUST:
+1. Check the state/PTO model chart in the handbook to find which Model applies to {state_info}
+2. Provide the specific details for that Model
+3. Do NOT ask the user for their state - you already have it in PERSONAL_DATA above"""
                     api_history = [
                         {"role": "user", "parts": [get_system_prompt(pq, user_state)]},
-                        {"role": "user", "parts": [f"PERSONAL_DATA: {json.dumps(me)}"]},
+                        {"role": "user", "parts": [personal_data_msg]},
                         {"role": "user", "parts": [pq]},
                     ]
                     with st.chat_message("assistant"):
@@ -457,7 +696,8 @@ if prompt := st.chat_input("Ask about company policies..."):
     elif low.lower().strip() == "/logout":
         st.session_state.auth_user = None
         st.session_state.auth_ok = False
-        reply = "Logged out."
+        st.session_state.user_personal_data = None  # Clear personal data
+        reply = "Logged out. I no longer have access to your personal information."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         with st.chat_message("assistant"):
             st.markdown(reply)
@@ -465,6 +705,9 @@ if prompt := st.chat_input("Ask about company policies..."):
 
     # If no command consumed the prompt, continue normal handling
     if not processed:
+        # Check if asking about another employee's general benefits
+        is_other_emp, emp_name = is_asking_about_other_employee(prompt)
+        
         # If the question requests personal info and user is not authenticated, prompt for login
         if needs_authentication(prompt) and not st.session_state.get("auth_ok"):
             st.session_state.pending_protected_question = prompt
@@ -479,16 +722,36 @@ if prompt := st.chat_input("Ask about company policies..."):
         else:
             # Build api_history; include personal data if authenticated and the question is personal
             user_state = ""
+            context_note = ""
+            me = {}
+            
             if st.session_state.get("auth_ok"):
-                personal = load_personal_data()
-                me = personal.get(st.session_state.auth_user, {})
+                # Use session-stored personal data if available, otherwise load fresh
+                if "user_personal_data" in st.session_state and st.session_state.user_personal_data:
+                    me = st.session_state.user_personal_data
+                else:
+                    personal = load_personal_data()
+                    me = personal.get(st.session_state.auth_user, {})
+                    st.session_state.user_personal_data = me
                 user_state = me.get("state", "")
             
+            # If asking about another employee, add context note
+            if is_other_emp:
+                context_note = f"\n\nNOTE: User is asking about {emp_name}. You should explain that all employees follow the same company policies and provide the general policy answer. Do NOT provide specific personal data for other employees."
+            
             api_history = [
-                {"role": "user", "parts": [get_system_prompt(prompt, user_state)]}
+                {"role": "user", "parts": [get_system_prompt(prompt, user_state) + context_note]}
             ]
-            if st.session_state.get("auth_ok") and needs_authentication(prompt):
-                api_history.append({"role": "user", "parts": [f"PERSONAL_DATA: {json.dumps(me)}"]})
+            # Always include PERSONAL_DATA if user is authenticated, so bot has full context
+            if st.session_state.get("auth_ok") and me:
+                state_info = me.get("state", "Unknown")
+                personal_data_msg = f"""PERSONAL_DATA: {json.dumps(me)}
+
+CRITICAL INSTRUCTION: The user's state is "{state_info}". When answering questions about PTO models, benefits, or policies that vary by location, you MUST:
+1. Check the state/PTO model chart in the handbook to find which Model applies to {state_info}
+2. Provide the specific details for that Model
+3. Do NOT ask the user for their state - you already have it in PERSONAL_DATA above"""
+                api_history.append({"role": "user", "parts": [personal_data_msg]})
 
             # Only include the last 4 chat messages to avoid token overflow
             recent_msgs = st.session_state.messages[-4:] if len(st.session_state.messages) > 4 else st.session_state.messages
