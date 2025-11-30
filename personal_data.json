@@ -1,0 +1,26 @@
+{
+  "testuser": {
+    "email": "testuser@example.com",
+    "phone": "555-0100",
+    "state": "California",
+    "home_address": "123 Demo Street, Apt 4, San Francisco, CA 94105",
+    "pay_rate": "32.50",
+    "hours_pto": 80,
+    "hours_sick_time": 40,
+    "employee_number": "100001",
+    "job_title": "Associate",
+    "disability": "None"
+  },
+  "bob": {
+    "email": "bob.smith@example.com",
+    "phone": "555-0200",
+    "state": "California",
+    "home_address": "456 Oak Avenue, Los Angeles, CA 90001",
+    "pay_rate": "22.50",
+    "hours_pto": 80,
+    "hours_sick_time": 40,
+    "employee_number": "2045",
+    "job_title": "Assistant Manager",
+    "disability": "None"
+  }
+}

@@ -88,6 +88,38 @@ if not st.session_state.messages:
     initial_greeting = f"Hi! I’m your {COMPANY_NAME} onboarding assistant. How can I help you today?"
     st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
 
+# If the user requested to edit personal info (via /edit), show the edit form in the main area
+if st.session_state.get("_edit_personal") and st.session_state.get("auth_ok") and st.session_state.get("auth_user"):
+    personal = load_personal_data()
+    me = personal.get(st.session_state.auth_user, {})
+    with st.form("update_personal"):
+        new_email = st.text_input("Email", value=me.get("email", ""))
+        new_phone = st.text_input("Phone", value=me.get("phone", ""))
+        new_state = st.text_input("State", value=me.get("state", ""))
+        new_address = st.text_input("Home Address", value=me.get("home_address", ""))
+        new_pay_rate = st.text_input("Pay Rate", value=str(me.get("pay_rate", "")))
+        new_hours_pto = st.number_input("Hours PTO", value=int(me.get("hours_pto", 0)))
+        new_hours_sick = st.number_input("Hours Sick Time", value=int(me.get("hours_sick_time", 0)))
+        new_employee_number = st.text_input("Employee Number", value=me.get("employee_number", ""))
+        new_job_title = st.text_input("Job Title", value=me.get("job_title", ""))
+        new_disability = st.text_input("Disability", value=me.get("disability", ""))
+        if st.form_submit_button("Save"):
+            personal[st.session_state.auth_user] = {
+                "email": new_email,
+                "phone": new_phone,
+                "state": new_state,
+                "home_address": new_address,
+                "pay_rate": new_pay_rate,
+                "hours_pto": int(new_hours_pto),
+                "hours_sick_time": int(new_hours_sick),
+                "employee_number": new_employee_number,
+                "job_title": new_job_title,
+                "disability": new_disability,
+            }
+            save_personal_data(personal)
+            st.success("Saved.")
+            st.session_state._edit_personal = False
+
 # Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):

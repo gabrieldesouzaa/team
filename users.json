@@ -1,0 +1,10 @@
+{
+  "testuser": {
+    "salt": "c332c881a7bb9c4bdad298ed7f36e2d2",
+    "hash": "8df761f147d5db87a560b9c7ad5a7ea629aeef955bf5638c6c1b152598ee8896"
+  },
+  "bob": {
+    "salt": "2900f617ba26c46c6be3f1f3156e127b",
+    "hash": "88bd54a688e2d9c38cc2924d31b81ce55a8cd1662d39bf4074892880c9467ad9"
+  }
+}
