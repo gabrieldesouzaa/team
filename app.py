@@ -35,23 +35,174 @@ st.markdown("""
 * { box-sizing: border-box; }
 body {
   margin: 0; font-family: system-ui, -apple-system, sans-serif;
-  background: #f3f4f6; display: flex; justify-content: center;
-  align-items: center; min-height: 100vh;
+  background: linear-gradient(135deg, #e9d5ff, #ddd6fe) !important;
 }
-.app-container {
-  background: #ffffff; width: 100%; max-width: 800px; height: 90vh;
-  border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-  display: flex; flex-direction: column; overflow: hidden;
+/* Force Streamlit container centering */
+.stApp {
+  background: linear-gradient(135deg, #e9d5ff, #ddd6fe) !important;
 }
-.app-header {
-  padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;
+/* Main content wrapper */
+.block-container {
+  max-width: 900px !important;
+  padding: 2rem 1rem !important;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.15);
+  margin: 2rem auto !important;
+  color: #000000 !important;
 }
-.app-header h1 { margin: 0 0 4px; font-size: 1.3rem; }
-.app-header p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+.block-container * {
+  color: #000000 !important;
+}
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9d5ff;
+  background: #f5f3ff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -2rem -1rem 0 -1rem;
+  border-radius: 20px 20px 0 0;
+}
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bot-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1a3a6b;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.bot-icon::after {
+  content: '🦌';
+  font-size: 24px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: brightness(0) invert(1);
+}
+.bot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bot-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937 !important;
+}
+.bot-status {
+  font-size: 0.8rem;
+  color: #6b7280 !important;
+}
+.date-divider {
+  text-align: center;
+  padding: 12px 0;
+  font-size: 0.8rem;
+  color: #000000 !important;
+  background: #fafafa;
+  border-bottom: 1px solid #f3f4f6;
+  margin: 0 -1rem;
+}
 /* Streamlit Specific Overrides */
-div.stApp > header { display: none; }
-.stChatMessage { background: none !important; }
+div.stApp > header { display: none !important; }
+footer { 
+  visibility: visible !important;
+  background: #e9d5ff !important;
+}
+.stApp > footer { 
+  background: #e9d5ff !important;
+}
+[data-testid="stToolbar"] { display: none !important; }
+header[data-testid="stHeader"] { display: none !important; }
+.stDeployButton { display: none !important; }
+#MainMenu { display: none !important; }
+.viewerBadge_container__1QSob { display: none !important; }
+.stApp {
+  background: linear-gradient(135deg, #e9d5ff, #ddd6fe) !important;
+}
+.stChatMessage { 
+  background: none !important; 
+  max-width: 100% !important;
+}
+.stChatMessage[data-testid="stChatMessage-user"] .stMarkdown {
+  background: #7c3aed !important;
+  color: white !important;
+  border-radius: 14px;
+  border-bottom-right-radius: 4px;
+  padding: 10px 12px;
+  max-width: 75%;
+  margin-left: auto;
+  display: inline-block;
+}
+.stChatMessage[data-testid="stChatMessage-assistant"] .stMarkdown {
+  background: #f5f3ff !important;
+  color: #000000 !important;
+  border: 1px solid #e9d5ff;
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  padding: 10px 12px;
+  max-width: 75%;
+  display: inline-block;
+}
+.stChatMessage[data-testid="stChatMessage-assistant"] .stMarkdown p {
+  color: #000000 !important;
+  margin: 0;
+}
+.stChatMessage[data-testid="stChatMessage-assistant"] .stMarkdown * {
+  color: #000000 !important;
+}
+.stChatMessage[data-testid="stChatMessage-user"] .stMarkdown * {
+  color: #ffffff !important;
+}
+/* Chat messages container - scrollable area */
+[data-testid="stChatMessageContainer"] {
+  background: #fafafa !important;
+  padding: 16px 0 !important;
+  margin: 0 -1rem !important;
+}
+[data-testid="stChatMessageContainer"] * {
+  color: #000000 !important;
+}
+/* Chat input at bottom - force inside container */
+.stChatInputContainer {
+  border-top: 1px solid #e9d5ff !important;
+  background: #ffffff !important;
+  padding: 12px 0 !important;
+  margin: 0 -1rem -2rem -1rem !important;
+  border-radius: 0 0 20px 20px;
+}
+.stChatInput input {
+  border-radius: 20px !important;
+  border: 1px solid #e5e7eb !important;
+  background: #f9fafb !important;
+  width: 100% !important;
+  margin: 0 1rem;
+}
+.stChatInput input:focus {
+  border-color: #a78bfa !important;
+  background: #ffffff !important;
+}
+/* Light blue highlighting for code/inline elements */
+code {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+}
+.stMarkdown code {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -548,14 +699,23 @@ if "auth_user" not in st.session_state:
     st.session_state.pending_protected_question = None
     st.session_state._expecting_login = False
 
-# Custom HTML Structure
+# Custom HTML Structure - Header only
 st.markdown("""
-<div class="app-container">
-    <header class="app-header">
-        <h1>Onboarding Assistant</h1>
-        <p>Ask about new-hire onboarding and company policies</p>
-    </header>
+<div class="chat-header">
+    <div class="chat-header-left">
+        <div class="bot-icon"></div>
+        <div class="bot-info">
+            <div class="bot-name">Abercrombie & Fitch HR Bot</div>
+            <div class="bot-status">We're online ...</div>
+        </div>
+    </div>
+</div>
 """, unsafe_allow_html=True)
+
+# Get current date for divider
+import datetime
+current_date = datetime.datetime.now().strftime("%B %d, %Y")
+st.markdown(f'<div class="date-divider">{current_date}</div>', unsafe_allow_html=True)
 
 # Chat-driven authentication: no sidebar login. Authentication is triggered
 # only when the user asks for personal information (see `needs_authentication`).
@@ -566,7 +726,7 @@ if "messages" not in st.session_state:
 
 # Add initial greeting if history is empty
 if not st.session_state.messages:
-     initial_greeting = f"Hi! I’m your {COMPANY_NAME} onboarding assistant. How can I help you today?"
+     initial_greeting = "Ask a question about company policy, or your personal data, and I will answer the best I can!"
      st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
 
 # If the user requested to edit personal info (via /edit), show the edit form in the main area
@@ -604,9 +764,7 @@ if st.session_state.get("_edit_personal") and st.session_state.get("auth_ok") an
 # Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Chat Input (chat-driven auth)
+        st.markdown(message["content"])# Chat Input (chat-driven auth)
 if prompt := st.chat_input("Ask about company policies..."):
     # Add user message to display
     st.session_state.messages.append({"role": "user", "content": prompt})

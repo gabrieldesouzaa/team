@@ -27,8 +27,16 @@ const DENY_MESSAGE =
 const chatLog = document.getElementById("chat-log");
 const chatForm = document.getElementById("chat-form");
 const userInput = document.getElementById("user-input");
-const apiKeyInput = document.getElementById("api-key-input");
-const providerSelect = document.getElementById("provider-select");
+
+// Set current date/time in the date divider
+function updateDateDivider() {
+  const dateDivider = document.getElementById("date-divider");
+  const now = new Date();
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  dateDivider.textContent = now.toLocaleDateString('en-US', options);
+}
+
+updateDateDivider();
 
 function appendMessage(sender, text, options = {}) {
   const wrapper = document.createElement("div");
@@ -95,12 +103,7 @@ COMPANY HANDBOOK:
 // Initial greeting
 appendMessage(
   "bot",
-  `Hi! I’m your ${COMPANY_NAME} onboarding assistant.\n\n` +
-    `I can answer questions about:\n` +
-    `• New employee onboarding steps\n` +
-    `• Company policies and procedures\n\n` +
-    `If you ask about anything else, I’ll politely let you know I’m limited to onboarding and policies.\n\n` +
-    `You can switch between OpenAI and Gemini at the top as long as you have the correct API key.`
+  "Ask a question about company policy, or your personal data, and I will answer the best I can!"
 );
 
 // =====================
@@ -202,43 +205,47 @@ async function callGemini(apiKey, userMessage) {
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const apiKey = apiKeyInput.value.trim();
   const text = userInput.value.trim();
-  const provider = providerSelect.value;
 
   if (!text) return;
-
-  if (!apiKey) {
-    alert("Please enter your API key first.");
-    return;
-  }
 
   appendMessage("user", text);
   userInput.value = "";
   userInput.focus();
 
   appendMessage("bot", "Thinking...", { isTemporary: true });
-  chatForm.querySelector("button").disabled = true;
+  chatForm.querySelector(".send-btn").disabled = true;
 
   try {
-    let reply;
-    if (provider === "gemini") {
-      reply = await callGemini(apiKey, text);
-    } else {
-      reply = await callOpenAI(apiKey, text);
-    }
-
-    replaceLastTempBotMessage(
-      reply || "I didn’t get a response back from the model."
-    );
+    // This is where you would call your backend API
+    // For now, we'll just simulate a response
+    const reply = "This is a demo response. Connect this to your backend API.";
+    
+    setTimeout(() => {
+      replaceLastTempBotMessage(reply);
+      chatForm.querySelector(".send-btn").disabled = false;
+    }, 1000);
   } catch (err) {
     console.error(err);
     replaceLastTempBotMessage(
-      "Sorry, I ran into an error talking to the AI service:\n\n" +
-        err.message +
-        "\n\nPlease check your provider selection, API key, and try again."
+      "Sorry, I ran into an error. Please try again."
     );
-  } finally {
-    chatForm.querySelector("button").disabled = false;
+    chatForm.querySelector(".send-btn").disabled = false;
   }
+});
+
+// Add refresh button functionality
+document.getElementById("refresh-btn").addEventListener("click", () => {
+  if (confirm("Are you sure you want to refresh the chat? This will clear all messages.")) {
+    chatLog.innerHTML = "";
+    appendMessage(
+      "bot",
+      "Ask a question about company policy, or your personal data, and I will answer the best I can!"
+    );
+  }
+});
+
+// Add minimize button functionality
+document.getElementById("minimize-btn").addEventListener("click", () => {
+  alert("In a production app, this would minimize the chat widget.");
 });

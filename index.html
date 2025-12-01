@@ -8,35 +8,29 @@
 </head>
 <body>
   <div class="app">
-    <header class="app-header">
-      <h1>Onboarding Assistant</h1>
-      <p>Ask about new-hire onboarding and company policies</p>
-    </header>
-
-    <section class="api-key-section">
-      <div class="provider-row">
-        <div class="provider-group">
-          <label for="provider-select">Provider</label>
-          <select id="provider-select">
-            <option value="openai">OpenAI</option>
-            <option value="gemini">Gemini</option>
-          </select>
-        </div>
-        <div class="key-group">
-          <label for="api-key-input">API Key</label>
-          <input
-            id="api-key-input"
-            type="password"
-            placeholder="Paste your API key here"
-          />
+    <header class="chat-header">
+      <div class="chat-header-left">
+        <div class="bot-icon"></div>
+        <div class="bot-info">
+          <div class="bot-name">Abercrombie & Fitch HR Bot</div>
+          <div class="bot-status">We're online ...</div>
         </div>
       </div>
-      <small>
-        Demo only. Your API key is used in this browser and is not stored, but it
-        is visible to anyone with access to this page. For production, route
-        requests through a backend server.
-      </small>
-    </section>
+      <div class="chat-header-right">
+        <button class="icon-btn" id="refresh-btn" title="Refresh chat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="minimize-btn" title="Minimize">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="date-divider" id="date-divider"></div>
 
     <main id="chat-log" class="chat-log"></main>
 
@@ -45,9 +39,14 @@
         id="user-input"
         type="text"
         autocomplete="off"
-        placeholder="Ask about onboarding or company policies..."
+        placeholder="Enter message"
       />
-      <button type="submit">Send</button>
+      <button type="submit" class="send-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
     </form>
   </div>
 
