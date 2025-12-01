@@ -1,4 +1,9 @@
 # Onboard AI 
+## 🎥 Video Pitch
+
+[▶️ Watch the Novatech AI Video Pitch](https://youtu.be/BQ2-fsxRKCE)  
+Link: https://youtu.be/BQ2-fsxRKCE
+
 
 
 
