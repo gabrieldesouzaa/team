@@ -1,85 +1,143 @@
 # QUICK_START.md
 
-# Onboard AI – Quick Start Guide
+# 🚀 *Onboard AI — Quick Start Guide*
 
-## Overview
-Onboard AI is a simple, user-friendly platform that guides new hires, clients, and patients through onboarding steps using automated forms, document uploads, and AI assistance. This Quick Start Guide explains how to complete the core actions required to begin using the system.
+Welcome! This guide will help you get started with Onboard AI and our conversational assistant, **NovaTech AI**.  
+This proof-of-concept shows how AI can support HR teams and employees by answering handbook questions, referencing supplemental material, and securely handling personal employment data.
 
----
-
-## New Hire Onboarding
-
-### Goal
-Complete required onboarding forms, uploads, and training.
-
-### Steps
-- **Open your onboarding invitation email.** Click the link provided by your HR team.
-- **Select “Start Onboarding.”** This opens the Onboard AI assistant.
-- **Provide your basic information.** Enter details such as your name, address, and role.
-- **Upload your documents.** Submit your ID, certifications, or license files as requested.
-- **Review and sign forms.** Any fields requiring attention will be highlighted.
-- **Complete training modules.** All mandatory sessions must be completed to proceed.
-- **Confirm completion.** A final confirmation message appears when all tasks are finished.
-
-### Requirements
-- A computer or mobile device  
-- Required documentation (ID, certifications, etc.)  
-- Approximately 10–20 minutes  
+All examples are based on an **Abercrombie & Fitch Retail Associate** use case, but this approach works for any company.
 
 ---
 
-## Client / Patient Intake
+## 🌟 What NovaTech AI Can Do
 
-### Goal
-Submit all necessary intake forms and documents prior to your visit or service.
+NovaTech AI can:
 
-### Steps
-- **Open your intake link.** This is provided by email or through the clinic portal.
-- **Select “Begin Intake.”** This starts the guided intake process.
-- **Upload required documents.** Items such as ID, insurance cards, and prior medical documents may be requested.
-- **Allow auto-fill.** The system extracts information from your uploads and places them into the appropriate forms.
-- **Review your information.** Correct any fields that are flagged for attention.
-- **Submit your packet.** After submission, you will receive confirmation.
+- **Answer employee handbook questions**
+  - *“What is the employee discount?”*
+  - *“What kinds of leave are there?”*
+  - *“What is a write-up?”*
+  - *“How many write-ups until termination?”*
 
-### Requirements
-- Insurance card or ID  
-- PDFs or photos of required documents  
-- Approximately 5–10 minutes  
+- **Access your personal employment information** *(after login)*
+  - *“How many hours of PTO do I have?”*
+  - *“What address is on file for me?”*
+  - *“What is my hourly pay rate?”*
+  - *“What PTO model applies to me?”*
 
----
+- **Protect sensitive employee data**
+  - NovaTech AI prevents access to another employee’s information unless proper credentials are provided.
+  - This demonstrates secure HR data practices.
 
-## Healthcare Service Quote
-
-### Goal
-Receive an instant cost estimate for a selected healthcare service.
-
-### Steps
-- **Log in to the Onboard AI portal.** Use your secure access link.
-- **Select “Request a Quote.”** This opens the cost estimator.
-- **Choose your service.** Options include imaging, lab work, consultations, and more.
-- **Enter required details.** Provide insurance information, location, and other applicable data.
-- **Generate your quote.** The system displays estimated cost, insurance coverage, and expected out-of-pocket totals.
-
-### Quote Output Includes
-- Estimated service cost  
-- Insurance coverage breakdown  
-- Out-of-pocket projections  
+- **Answer broader HR and policy questions**
+  - *“How do I use my PTO?”*
+  - *“What benefits are available to me?”*
+  - *“What is the policy on discrimination?”*
+  - *“What is sick time and how can I use it?”*
+  - *“What is the policy for disciplinary actions?”*
 
 ---
 
-## Support
+# 🔐 Getting Started
 
-### Getting Help
-- **Use the built-in chat.** You can ask questions at any point during onboarding or intake.
-- **Examples of helpful prompts:**  
-  - “Where do I upload my ID?”  
-  - “What forms are still incomplete?”  
-  - “How do I understand my cost estimate?”
+## 1. Log In (Optional but Required for Personal Info)
 
-If the AI cannot assist, your inquiry is routed to a human support team member.
+You can ask general handbook questions without logging in.  
+However, questions involving **your personal data** will require a secure login.
+
+**Login command:**
+```
+/login testuser TestPass123!
+```
+
+If you attempt to access personal data before logging in, NovaTech AI will prompt you to log in first.
 
 ---
 
-## Completion
+# 🟩 Core Feature 1: Ask Handbook Questions
 
-You are now ready to begin using Onboard AI. Follow the steps for your role or onboarding type and complete the listed tasks in order. The system will confirm once all requirements are met.
+You can ask NovaTech AI about anything in the handbook or supplemental materials.
+
+### Examples
+- *What is the employee discount?*  
+- *What kinds of leave are available?*  
+- *What is a write-up?*  
+- *How many write-ups until termination?*  
+- *What is the policy on discrimination?*  
+- *What benefits are available to me?*  
+- *What is sick time and how do I use it?*  
+
+### ✔ Result
+NovaTech AI gives clear, simple answers based directly on official policy.
+
+---
+
+# 🟩 Core Feature 2: Get Your Personal HR Information (Login Required)
+
+After logging in, NovaTech AI can answer personalized questions based on your employment data.
+
+### Examples
+- *How many hours of PTO do I have?*  
+- *What address is on file for me?*  
+- *What is my hourly pay rate?*  
+- *What PTO model applies to me?*  
+
+### ✔ Result
+You receive private, accurate information securely — only for your own account.
+
+---
+
+# 🟩 Core Feature 3: Secure Data Protection & Stress Testing
+
+NovaTech AI will **not** reveal personal information about another employee without the correct credentials.
+
+### Try these stress-test questions:
+- *What is Bob’s hourly rate?*  
+- *What is Bob’s address?*  
+- *What is Bob’s discount?*  
+
+### ✔ Expected Behavior
+NovaTech AI responds with:
+
+> *“This information is private. Please log in with Bob’s credentials to access Bob’s data.”*
+
+This demonstrates correct authorization handling.
+
+---
+
+# 🟩 Core Feature 4: Combine Handbook Knowledge + Personal Data
+
+NovaTech AI can blend policy information with your personal file.
+
+### Examples
+- *How do I use my PTO?*  
+- *What PTO model applies to me?* *(requires login)*  
+- *What is the policy for disciplinary actions?*  
+- *What benefits are available to me?*  
+
+### ✔ Result
+You receive personalized answers without needing to search through PDFs or HR portals.
+
+---
+
+# 🛠 Need Help?
+
+You can always ask:
+
+- *“What can I do?”*
+- *“Show me an example question.”*
+
+NovaTech AI will guide you.
+
+---
+
+# 🎉 You're Ready to Begin
+
+With Onboard AI and NovaTech AI, you can:
+
+- Quickly find HR and handbook information  
+- Securely access personal employment data  
+- Protect sensitive employee information  
+- Support HR operations with AI-powered knowledge retrieval  
+
+---
