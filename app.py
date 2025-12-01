@@ -139,8 +139,8 @@ header[data-testid="stHeader"] { display: none !important; }
   color: white !important;
   border-radius: 14px;
   border-bottom-right-radius: 4px;
-  padding: 10px 12px;
-  max-width: 75%;
+  padding: 8px 10px;
+  max-width: 70%;
   margin-left: auto;
   display: inline-block;
 }
@@ -150,8 +150,8 @@ header[data-testid="stHeader"] { display: none !important; }
   border: 1px solid #e9d5ff;
   border-radius: 14px;
   border-bottom-left-radius: 4px;
-  padding: 10px 12px;
-  max-width: 75%;
+  padding: 8px 10px;
+  max-width: 70%;
   display: inline-block;
 }
 .stChatMessage[data-testid="stChatMessage-assistant"] .stMarkdown p {
